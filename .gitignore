@@ -1,6 +1,31 @@
-check.info
+# Ignorar arquivos de dados grandes e temporários
 olds_baks/
 /data/
 auxdata/
 output/
+
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Ambientes virtuais
+env/
+venv/
+.venv/
+
+# Configurações locais
+*.env
+
+# Arquivos temporários
+*.tmp
+*.bak
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Diretórios de build
+build/
+dist/
+*.egg-info/
 
