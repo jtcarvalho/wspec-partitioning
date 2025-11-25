@@ -1,0 +1,1 @@
+../finalPartSpec/surigae/sarspec/sar-data/dataset-wav-sar-l3-spc-nrt-global-s1a_20210409T0600Z_20210503T0300Z_P20210426T0540Z_10-APR-2021-00H_lon_+176_lat_+47-rep.nc
