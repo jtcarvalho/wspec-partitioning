@@ -1,8 +1,12 @@
 # Ignorar arquivos de dados grandes e temporários
+
 olds_baks/
-/data/
+data/
 auxdata/
 output/
+scripts/concat-results.py
+
+
 
 # Bytecode
 __pycache__/
