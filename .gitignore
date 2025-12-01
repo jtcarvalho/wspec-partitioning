@@ -5,7 +5,7 @@ data/
 auxdata/
 output/
 scripts/concat-results.py
-
+scripts/workflow.md
 
 
 # Bytecode
