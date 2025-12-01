@@ -11,11 +11,15 @@ import xarray as xr
 import numpy as np
 from utils import load_sar_spectrum, calculate_wave_parameters
 from partition import partition_spectrum
+case = 'surigae'
+case = 'lee'
+case = 'freddy'
+#case = 'all'
 
 # Configuration
-OUTPUT_DIR = '../data/sar/partition'
-SAR_DATA_PATH = '/Users/jtakeo/data/sentinel1ab/freddy'
-CSV_PATH = '../auxdata/sar_matches_freddy_track_3day.csv'
+OUTPUT_DIR = f'../data/{case}/partition'
+SAR_DATA_PATH = f'/Users/jtakeo/data/sentinel1ab/{case}'
+CSV_PATH = f'../auxdata/sar_matches_{case}_track_3day.csv'
 MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of total energy
 GROUP_NAME = "obs_params"
 
@@ -105,7 +109,7 @@ def save_partition_results(ref, index, date_time, data, output_dir):
     """Save partition results to CSV file"""
     dt = pd.to_datetime(date_time)
     date_time_formatted = dt.strftime('%Y%m%d-%H%M%S')
-    output_filename = f'partition_sar_{ref}_{index}_{date_time_formatted}.csv'
+    output_filename = f'sar_{ref:03d}_{index}_{date_time_formatted}.csv'
     output_path = os.path.join(output_dir, output_filename)
     
     df_results = pd.DataFrame([data])

@@ -6,11 +6,16 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # For non-interactive backend
 
+case = 'lee'
+case = 'freddy'
+case = 'surigae'
+case = 'all'
+
 # Configuration
-WW3_DIR = '../data/ww3/partition'
-SAR_DIR = '../data/sar/partition'
-OUTPUT_DIR = '../output'
-QUALITY_FLAG_OPTIONS = [0]
+WW3_DIR = f'../data/{case}/partition'
+SAR_DIR = f'../data/{case}/partition'
+OUTPUT_DIR = f'../output/{case}'
+QUALITY_FLAG_OPTIONS = [0] # Doing only quality_flag == 0 (very good data)
 
 # Plot settings
 PLOT_LIMITS = {
@@ -43,7 +48,7 @@ def load_and_filter_sar(sar_file, quality_flags=None):
 
 def load_ww3_files_dict(ww3_dir):
     """Load all WW3 files and create a dictionary indexed by reference_id"""
-    ww3_files = list(Path(ww3_dir).glob('partition_ww3_*.csv'))
+    ww3_files = list(Path(ww3_dir).glob('ww3_*.csv'))
     ww3_dict = {}
     
     for ww3_file in ww3_files:
@@ -207,7 +212,7 @@ def create_partition_matches(tp_tol=3.0, dp_tol=40.0, quality_flags=None):
     if quality_flags is None:
         quality_flags = QUALITY_FLAG_OPTIONS
     
-    sar_files = list(Path(SAR_DIR).glob('partition_sar_*.csv'))
+    sar_files = list(Path(SAR_DIR).glob('sar_*.csv'))
     ww3_dict = load_ww3_files_dict(WW3_DIR)
     
     print(f"Found {len(sar_files)} SAR files and {len(ww3_dict)} WW3 files")
@@ -546,7 +551,7 @@ def compare_sar_ww3(quality_flags=None):
     if quality_flags is None:
         quality_flags = QUALITY_FLAG_OPTIONS
     
-    sar_files = list(Path(SAR_DIR).glob('partition_sar_*.csv'))
+    sar_files = list(Path(SAR_DIR).glob('sar_*.csv'))
     ww3_dict = load_ww3_files_dict(WW3_DIR)
     
     print(f"Found {len(sar_files)} SAR files and {len(ww3_dict)} WW3 files")
@@ -620,7 +625,7 @@ if __name__ == '__main__':
     
     RUN_CREATE_FILES = False      # Create partition*.csv files (matching SAR/WW3)
     RUN_CREATE_PLOTS = True       # Create scatter plots
-    RUN_COMPUTE_METRICS = False   # Compute and save comparison metrics
+    RUN_COMPUTE_METRICS = False  # Compute and save comparison metrics
     
     # ========================================================================
     

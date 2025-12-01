@@ -12,10 +12,15 @@ import numpy as np
 from utils import calculate_wave_parameters
 from partition import partition_spectrum
 
+case = 'lee'
+case = 'freddy'
+case = 'surigae'
+#case = 'all'
+
 # Configuration
-OUTPUT_DIR = '../data/ww3/partition'
-CSV_PATH = '../auxdata/sar_matches_freddy_track_3day.csv'
-WW3_DATA_PATH = '/Users/jtakeo/data/ww3/freddy'
+OUTPUT_DIR = f'../data/{case}/partition'
+CSV_PATH = f'../auxdata/sar_matches_{case}_track_3day.csv'
+WW3_DATA_PATH = f'/Users/jtakeo/data/ww3/{case}'
 MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of total energy
 
 
@@ -214,7 +219,7 @@ def save_partition_results(ref, selected_time, data, output_dir):
     """
     # Create filename
     date_time_formatted = selected_time.strftime('%Y%m%d-%H%M%S')
-    output_filename = f'partition_ww3_{ref}_{date_time_formatted}.csv'
+    output_filename = f'ww3_{ref:03d}_{date_time_formatted}.csv'
     output_path = os.path.join(output_dir, output_filename)
     
     # Create DataFrame and save
@@ -245,7 +250,7 @@ def process_single_case(row, idx, total_cases, output_dir):
     target_time_dt = pd.to_datetime(target_time_str)
     
     # Construct file path
-    file_path = f'{WW3_DATA_PATH}/ww3_sar{ref}.nc'
+    file_path = f'{WW3_DATA_PATH}/ww3_sar{ref:03d}.nc'
     
     # Print header
     print_case_header(idx, total_cases, ref, target_time_dt)
