@@ -16,6 +16,9 @@ WW3_DIR = f'../data/{case}/partition'
 SAR_DIR = f'../data/{case}/partition'
 OUTPUT_DIR = f'../output/{case}'
 QUALITY_FLAG_OPTIONS = [0] # Doing only quality_flag == 0 (very good data)
+TP_TOLERANCE = 2.0
+DP_TOLERANCE = 30.0
+
 
 # Plot settings
 PLOT_LIMITS = {
@@ -69,15 +72,22 @@ def compute_angular_difference(angle1, angle2):
 # PARTITION MATCHING
 # ============================================================================
 
-def find_best_match(sar_partitions, ww3_partitions, sar_pnum, tp_tol=3.0, dp_tol=40.0):
+def find_best_match(sar_partitions, ww3_partitions, sar_pnum, tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE):
     """
     Find best matching WW3 partition for a given SAR partition
-    based on Tp and Dp proximity
+    based on Tp and Dp proximity.
+    
+    Note: SAR and WW3 partitions with Tp < 10s are rejected because SAR is not
+    reliable for high-frequency wind sea detection, making validation impossible.
     """
     # Find the SAR partition
     sar_data = next((p for p in sar_partitions if p['partition'] == sar_pnum), None)
     if not sar_data:
         return None, None
+    
+    # Reject SAR partitions with Tp < 10s (SAR not reliable for wind sea)
+    if not np.isnan(sar_data['tp']) and sar_data['tp'] < 10.0:
+        return sar_data, None
     
     # Search for best matching WW3 partition
     best_ww3 = None
@@ -87,6 +97,10 @@ def find_best_match(sar_partitions, ww3_partitions, sar_pnum, tp_tol=3.0, dp_tol
         # Skip if any required value is NaN
         if (np.isnan(ww3['tp']) or np.isnan(sar_data['tp']) or
             np.isnan(ww3['dp']) or np.isnan(sar_data['dp'])):
+            continue
+        
+        # Reject WW3 partitions with Tp < 10s (cannot validate against SAR)
+        if ww3['tp'] < 10.0:
             continue
         
         # Calculate differences
@@ -204,7 +218,7 @@ def compute_metrics(obs, model):
 # PARTITION MATCHING AND FILE GENERATION
 # ============================================================================
 
-def create_partition_matches(tp_tol=3.0, dp_tol=40.0, quality_flags=None):
+def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE, quality_flags=None):
     """
     Create matched partition files using find_best_match
     Filter SAR by quality_flag and match with WW3 partitions
@@ -431,6 +445,121 @@ def plot_partition_comparisons():
     print("\nAll scatter plots created successfully!")
 
 
+def plot_partition_comparisons_colored():
+    """Create scatter plots with Tp-colored points for Hs comparison"""
+    output_dir = Path(OUTPUT_DIR)
+    
+    for pnum in [1, 2, 3]:
+        partition_file = output_dir / f'partition{pnum}.csv'
+        
+        if not partition_file.exists():
+            print(f"Partition {pnum} file not found, skipping colored plot...")
+            continue
+        
+        df = pd.read_csv(partition_file)
+        
+        if len(df) == 0:
+            print(f"Partition {pnum} has no data, skipping colored plot...")
+            continue
+        
+        # Extract data
+        sar_hs = df['sar_Hs'].values
+        ww3_hs = df['ww3_Hs'].values
+        sar_tp = df['sar_Tp'].values
+        
+        # Remove NaN values
+        mask = ~(np.isnan(sar_hs) | np.isnan(ww3_hs) | np.isnan(sar_tp))
+        sar_hs_clean = sar_hs[mask]
+        ww3_hs_clean = ww3_hs[mask]
+        sar_tp_clean = sar_tp[mask]
+        
+        if len(sar_hs_clean) == 0:
+            print(f"Partition {pnum} has no valid data for colored plot, skipping...")
+            continue
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Get Hs axis limits
+        hs_min, hs_max = PLOT_LIMITS['Hs']
+        ax.set_xlim(hs_min, hs_max)
+        ax.set_ylim(hs_min, hs_max)
+        ax.set_aspect('equal', adjustable='box')
+        ax.grid(True, alpha=0.3)
+        
+        # Create scatter plot colored by Tp
+        scatter = ax.scatter(sar_hs_clean, ww3_hs_clean, 
+                            c=sar_tp_clean, 
+                            cmap='viridis', 
+                            s=100, 
+                            edgecolors='black', 
+                            linewidth=0.5,
+                            vmin=10, vmax=20,
+                            alpha=0.8)
+        
+        # Add colorbar
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('SAR Tp (s)', fontsize=12, fontweight='bold')
+        
+        # 1:1 line
+        ax.plot([hs_min, hs_max], [hs_min, hs_max], 'r--', linewidth=2, label='1:1 line')
+        
+        # Regression line
+        if len(sar_hs_clean) > 1:
+            z = np.polyfit(sar_hs_clean, ww3_hs_clean, 1)
+            p = np.poly1d(z)
+            x_line = np.linspace(hs_min, hs_max, 100)
+            ax.plot(x_line, p(x_line), 'b-', linewidth=1.5, alpha=0.7,
+                   label=f'Fit: y={z[0]:.2f}x+{z[1]:.2f}')
+        
+        # Add labels and title
+        ax.set_xlabel('SAR Hs (m)', fontsize=12, fontweight='bold')
+        ax.set_ylabel('WW3 Hs (m)', fontsize=12, fontweight='bold')
+        ax.set_title(f'Partition {pnum} - Hs Comparison (colored by Tp, n={len(df)})',
+                    fontsize=14, fontweight='bold')
+        ax.legend(loc='upper left', fontsize=10)
+        
+        # Add metrics textbox
+        bias = np.mean(ww3_hs_clean - sar_hs_clean)
+        nbias = bias / np.mean(sar_hs_clean) if np.mean(sar_hs_clean) != 0 else np.nan
+        rmse = np.sqrt(np.mean((ww3_hs_clean - sar_hs_clean)**2))
+        nrmse = rmse / np.mean(sar_hs_clean) if np.mean(sar_hs_clean) != 0 else np.nan
+        
+        if len(sar_hs_clean) > 1:
+            pearson_r, _ = pearsonr(sar_hs_clean, ww3_hs_clean)
+        else:
+            pearson_r = np.nan
+        
+        metrics_text = (
+            f'n = {len(sar_hs_clean)}\n'
+            f'Bias = {bias:.3f}\n'
+            f'NBias = {nbias:.3f}\n'
+            f'RMSE = {rmse:.3f}\n'
+            f'NRMSE = {nrmse:.3f}\n'
+            f'R = {pearson_r:.3f}'
+        )
+        
+        y_pos = 0.05 if np.mean(ww3_hs_clean) > np.mean(sar_hs_clean) else 0.95
+        va = 'bottom' if y_pos == 0.05 else 'top'
+        
+        ax.text(0.95, y_pos, metrics_text,
+               transform=ax.transAxes,
+               fontsize=10,
+               verticalalignment=va,
+               horizontalalignment='right',
+               bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        plt.tight_layout()
+        
+        # Save figure
+        output_file = output_dir / f'partition{pnum}_scatter_colored.png'
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"Saved colored plot: {output_file}")
+        plt.close()
+    
+    print("\nAll colored scatter plots created successfully!")
+
+
 # ============================================================================
 # COMPARISON AND METRICS
 # ============================================================================
@@ -598,7 +727,7 @@ def main(create_files=True, create_plots=True, compute_metrics=True):
         print("="*80)
         print("CREATING MATCHED PARTITION FILES")
         print("="*80)
-        partition_matches = create_partition_matches(tp_tol=3.0, dp_tol=40.0)
+        partition_matches = create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE)
     
     if create_plots:
         # Create scatter plots
@@ -606,6 +735,12 @@ def main(create_files=True, create_plots=True, compute_metrics=True):
         print("CREATING SCATTER PLOTS")
         print("="*80)
         plot_partition_comparisons()
+        
+        # Create colored scatter plots (Hs colored by Tp)
+        print("\n" + "="*80)
+        print("CREATING COLORED SCATTER PLOTS (Hs by Tp)")
+        print("="*80)
+        plot_partition_comparisons_colored()
     
     if compute_metrics:
         # Compute comparison metrics
