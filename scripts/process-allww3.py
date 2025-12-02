@@ -12,8 +12,8 @@ import numpy as np
 from utils import calculate_wave_parameters
 from partition import partition_spectrum
 
-case = 'lee'
-case = 'freddy'
+#case = 'lee'
+#case = 'freddy'
 case = 'surigae'
 #case = 'all'
 
@@ -22,7 +22,7 @@ OUTPUT_DIR = f'../data/{case}/partition'
 CSV_PATH = f'../auxdata/sar_matches_{case}_track_3day.csv'
 WW3_DATA_PATH = f'/Users/jtakeo/data/ww3/{case}'
 MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of total energy
-
+PEAK_DETECTION_SENSITIVITY = 0.5
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -263,7 +263,7 @@ def process_single_case(row, idx, total_cases, output_dir):
     E2d, freq, dirs, dirs_rad, lon, lat = load_ww3_spectrum(file_path, itime)
     
     # Apply partitioning
-    results = partition_spectrum(E2d, freq, dirs_rad, 0.05, 5)
+    results = partition_spectrum(E2d, freq, dirs_rad, PEAK_DETECTION_SENSITIVITY, 5)
     
     if results is None:
         print("⚠ No spectral peaks identified!")

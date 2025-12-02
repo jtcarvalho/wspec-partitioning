@@ -12,8 +12,8 @@ import numpy as np
 from utils import load_sar_spectrum, calculate_wave_parameters
 from partition import partition_spectrum
 case = 'surigae'
-case = 'lee'
-case = 'freddy'
+#case = 'lee'
+#case = 'freddy'
 #case = 'all'
 
 # Configuration
@@ -21,6 +21,7 @@ OUTPUT_DIR = f'../data/{case}/partition'
 SAR_DATA_PATH = f'/Users/jtakeo/data/sentinel1ab/{case}'
 CSV_PATH = f'../auxdata/sar_matches_{case}_track_3day.csv'
 MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of total energy
+PEAK_DETECTION_SENSITIVITY = 0.5
 GROUP_NAME = "obs_params"
 
 
@@ -183,7 +184,7 @@ def process_single_case(row, idx, total_cases, output_dir):
     print(f"Integrated: Hs={hs:.2f}m, Tp={tp:.2f}s, Dp={dp:.0f}°")
     
     # Apply partitioning
-    results = partition_spectrum(E2d, freq, dirs_rad, 0.05, 5)
+    results = partition_spectrum(E2d, freq, dirs_rad, PEAK_DETECTION_SENSITIVITY, 5) 
     
     if results is None:
         print("⚠ No spectral peaks identified!")
