@@ -1,1 +1,1 @@
-# Wave Spectra Partitioning
+#  **WA**ve **S**pectra **P**artitioning
