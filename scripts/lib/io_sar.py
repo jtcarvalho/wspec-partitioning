@@ -68,7 +68,7 @@ def convert_sar_energy_units(E_sar, k, phi):
     for j in range(len(phi)):
         E_clean = np.where(np.isfinite(E_m2_s_rad[:, j]) & (E_m2_s_rad[:, j] >= 0), 
                           E_m2_s_rad[:, j], 0)
-        m0 += np.trapz(E_clean, freq) * ddir
+        m0 += np.trapezoid(E_clean, freq) * ddir
     hs = 4 * np.sqrt(m0)
     
     print(f"╔══════════════════════════════════════════════════════════════╗")
