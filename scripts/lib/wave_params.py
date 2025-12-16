@@ -52,7 +52,7 @@ def calculate_wave_parameters(E2d, freq, dirs_rad):
     # Calcular momento espectral m0 usando integração trapezoidal
     m0 = 0
     for j in range(len(dirs_rad)):
-        m0 += np.trapezoid(E2d_clean[:, j], freq) * ddir
+        m0 += np.trapz(E2d_clean[:, j], freq) * ddir
     
     # Calcular espectro 1D para encontrar pico
     spec1d = np.sum(E2d_clean, axis=1) * ddir

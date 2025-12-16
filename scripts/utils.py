@@ -61,7 +61,7 @@ def convert_sar_energy_units(E_sar, k, phi):
     ddir = 2 * np.pi / len(phi)
     m0 = 0
     for j in range(len(phi)):
-        m0 += np.trapezoid(np.where(np.isfinite(E_m2_s_rad[:, j]) & (E_m2_s_rad[:, j] >= 0), E_m2_s_rad[:, j], 0), freq) * ddir
+        m0 += np.trapz(np.where(np.isfinite(E_m2_s_rad[:, j]) & (E_m2_s_rad[:, j] >= 0), E_m2_s_rad[:, j], 0), freq) * ddir
     hs = 4 * np.sqrt(m0)
     
     print(f"╔══════════════════════════════════════════════════════════════╗")
@@ -202,7 +202,7 @@ def calculate_wave_parameters(E2d, freq, dirs_rad):
     # Calcular momento espectral m0 usando integração trapezoidal em frequência
     m0 = 0
     for j in range(len(dirs_rad)):
-        m0 += np.trapezoid(E2d_clean[:, j], freq) * ddir
+        m0 += np.trapz(E2d_clean[:, j], freq) * ddir
     
     # Calcular espectro 1D para encontrar pico
     spec1d = np.sum(E2d_clean, axis=1) * ddir
