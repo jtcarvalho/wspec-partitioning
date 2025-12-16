@@ -1,28 +1,30 @@
 # **WASP** - **WA**ve **S**pectra **P**artitioning
 
-Watershed Algorithm for partitioning the ocean wave spectra from WW3 and SAR (Sentinel)
+Watershed Algorithm for partitioning the ocean wave spectra from WW3 and SAR (Sentinel
 
-> **🔗 Companion Repository:** For analysis and validation of partitioned spectra, see [**HIVE** (Hierarchical Integration of Verified wavE partitions)](https://github.com/jtcarvalho/hive)
+<!--
+
+**🔗 Companion Repository:** For analysis and validation of partitioned spectra, see [**HIVE** (Hierarchical Integration of Verified wavE partitions)](https://github.com/jtcarvalho/hive)
+
+-->
+
 
 ## 📋 What is WASP?
 
 WASP focuses exclusively on **spectral partitioning** - the process of separating ocean wave spectra into individual wave systems (partitions). Each partition represents a distinct wave system characterized by significant wave height (Hs), peak period (Tp), and direction (Dp).
 
 **WASP handles:**
+
 - ✅ Spectral partitioning using watershed algorithm
 - ✅ Processing SAR (Sentinel) and WW3 model spectra
 - ✅ Extracting wave parameters (Hs, Tp, Dp) for each partition
 
-**WASP does NOT handle:**
-- ❌ Statistical validation and comparison
-- ❌ Bias analysis and reporting
-- ❌ Visualization of validation metrics
-
-👉 **For analysis and validation**, use the companion repository [**HIVE**](https://github.com/jtcarvalho/hive)
+👉 **For analysis and validation**, use the repository [**HIVE**](https://github.com/jtcarvalho/hive)
 
 ## 🚀 Installation
 
 ### Prerequisites
+
 - Python 3.10 or higher
 - Git
 
@@ -44,18 +46,6 @@ source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
-
-### Option 2: Using Conda (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/jtcarvalho/wasp.git
-cd wasp
-
-# Create and activate conda environment
-conda env create -f environment.yml
-conda activate wasp
 ```
 
 ### Verify Installation
