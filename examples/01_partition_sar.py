@@ -1,14 +1,14 @@
 """
-PASSO 1: Particionar espectros SAR
+STEP 1: Partition SAR Spectra
 
-Este script processa espectros 2D do SAR (Sentinel-1), aplica o algoritmo de 
-particionamento e salva os resultados em CSV.
+This script processes 2D SAR (Sentinel-1) spectra, applies the partitioning 
+algorithm, and saves the results to CSV.
 
 Workflow:
-1. Lê arquivo SAR (NetCDF) com espectros 2D
-2. Converte de número de onda (k) para frequência (f)
-3. Aplica algoritmo watershed de particionamento
-4. Salva Hs, Tp, Dp para cada partição identificada
+1. Read SAR file (NetCDF) with 2D spectra
+2. Convert from wavenumber (k) to frequency (f)
+3. Apply watershed partitioning algorithm
+4. Save Hs, Tp, Dp for each identified partition
 """
 
 import os
@@ -16,13 +16,13 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
-# Importar do pacote wasp
+# Import from wasp package
 from wasp.io_sar import load_sar_spectrum
 from wasp.wave_params import calculate_wave_parameters
 from wasp.partition import partition_spectrum
 
 # ============================================================================
-# CONFIGURAÇÃO
+# CONFIGURATION
 # ============================================================================
 
 # case = 'surigae'

@@ -3,25 +3,26 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wasp"
+name = "wasp-ocean"
 version = "0.1.0"
-description = "Wave Analysis from Sentinel and WaveWatch III Partitioning"
+description = "WAve Spectra Partitioning - Watershed algorithm for ocean wave spectra"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "JT Carvalho", email = "jtcarvalho@example.com"}
 ]
-keywords = ["waves", "oceanography", "SAR", "WaveWatch3", "spectral partitioning"]
+keywords = ["waves", "oceanography", "SAR", "WaveWatch3", "spectral partitioning", "watershed"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Physics",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = [
@@ -43,7 +44,9 @@ Issues = "https://github.com/jtcarvalho/wasp/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["wasp"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 wasp = ["*.py"]

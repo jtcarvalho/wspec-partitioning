@@ -1,15 +1,15 @@
 """
-PASSO 4: Validar SAR vs WW3
+STEP 4: Validate SAR vs WW3
 
-Este script compara os resultados de particionamento SAR e WW3, fazendo matching
-de partições similares e gerando métricas de validação e gráficos.
+This script compares SAR and WW3 partitioning results, matching
+similar partitions and generating validation metrics and plots.
 
 Workflow:
-1. Carrega CSVs de particionamento SAR e WW3
-2. Faz matching de partições baseado em Tp e Dp
-3. Gera arquivos de partições pareadas (partition1.csv, partition2.csv, partition3.csv)
-4. Cria scatter plots comparando SAR vs WW3
-5. Calcula métricas estatísticas (bias, RMSE, correlação)
+1. Load SAR and WW3 partitioning CSVs
+2. Match partitions based on Tp and Dp
+3. Generate paired partition files (partition1.csv, partition2.csv, partition3.csv)
+4. Create scatter plots comparing SAR vs WW3
+5. Calculate statistical metrics (bias, RMSE, correlation)
 """
 
 import os
@@ -20,10 +20,10 @@ from pathlib import Path
 from scipy.stats import pearsonr
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Agg')  # Backend não-interativo para salvar figuras
+matplotlib.use('Agg')  # Non-interactive backend for saving figures
 
 # ============================================================================
-# CONFIGURAÇÃO
+# CONFIGURATION
 # ============================================================================
 
 # case = 'surigae'

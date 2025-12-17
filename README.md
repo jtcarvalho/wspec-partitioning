@@ -1,6 +1,9 @@
 # **WASP** - **WA**ve **S**pectra **P**artitioning
 
-Watershed Algorithm for partitioning the ocean wave spectra from WW3 and SAR (Sentinel
+Watershed Algorithm for partitioning ocean wave spectra from WW3 and SAR (Sentinel-1)
+
+[![PyPI version](https://badge.fury.io/py/wasp-ocean.svg)](https://pypi.org/project/wasp-ocean/)
+[![Python Version](https://img.shields.io/pypi/pyversions/wasp-ocean.svg)](https://pypi.org/project/wasp-ocean/)
 
 <!--
 
@@ -15,58 +18,47 @@ WASP focuses exclusively on **spectral partitioning** - the process of separatin
 **WASP handles:**
 
 - ✅ Spectral partitioning using watershed algorithm
-- ✅ Processing SAR (Sentinel) and WW3 model spectra
+- ✅ Processing SAR (Sentinel-1) and WW3 model spectra
 - ✅ Extracting wave parameters (Hs, Tp, Dp) for each partition
 
-👉 **For analysis and validation**, use the repository [**HIVE**](https://github.com/jtcarvalho/hive)
+👉 **For analysis and validation**, see the companion repository [**HIVE**](https://github.com/jtcarvalho/hive)
 
 ## 🚀 Installation
 
-### Método 1: Instalação Local (Desenvolvimento)
+> ⚠️ **IMPORTANT:** Python 3.10 or higher is required.
 
-Instale o pacote em modo editável para desenvolvimento ou uso local:
+### Install from PyPI (Recommended)
 
 ```bash
-# Clone o repositório
-git clone https://github.com/jtcarvalho/wasp.git
-cd wasp
-
-# Instale em modo editável (recomendado)
-pip install -e .
+pip install wasp-ocean
 ```
 
-### Método 2: Ambiente Virtual Tradicional
+### Verify Installation
 
 ```bash
-# Clone o repositório
-git clone https://github.com/jtcarvalho/wasp.git
-cd wasp
-
-# Crie ambiente virtual
-python -m venv venv
-
-# Ative o ambiente virtual
-# No macOS/Linux:
-source venv/bin/activate
-# No Windows:
-# venv\Scripts\activate
-
-# Instale o pacote
-pip install -e .
-```
-
-### Verificar Instalação
-
-```bash
-# Teste a importação
+# Test the import
 python -c "import wasp; print(f'WASP version: {wasp.__version__}')"
 
-# Teste as funções principais
-python -c "from wasp import partition_spectrum, calculate_wave_parameters; print('✓ Instalação bem-sucedida!')"
+# Test main functions
+python -c "from wasp import partition_spectrum, calculate_wave_parameters; print('✓ Installation successful!')"
+```
+
+### Development Installation
+
+For development or local modifications:
+
+```bash
+# Clone the repository
+git clone https://github.com/jtcarvalho/wasp.git
+cd wasp
+
+# Install in editable mode
+pip install -e .
 ```
 
 ## 📦 Key Dependencies
 
+- **Python >= 3.10** (required)
 - **NumPy >= 2.1.0** (required for `np.trapezoid`)
 - pandas >= 2.2.0
 - xarray >= 2024.11.0
@@ -75,47 +67,40 @@ python -c "from wasp import partition_spectrum, calculate_wave_parameters; print
 - scikit-image >= 0.22.0
 - netCDF4 >= 1.5.4
 
-> ⚠️ **Importante:** NumPy < 2.1.0 causará erros pois `np.trapezoid` não está disponível.
+> ⚠️ **Note:** NumPy < 2.1.0 will cause errors as `np.trapezoid` is not available.
 
-## 💡 Uso Rápido
+## 📚 Documentation
 
-### Como Biblioteca Python
+For detailed usage examples and API documentation, please see the [examples/](examples/) directory in the repository:
 
-```python
-import numpy as np
-from wasp import partition_spectrum, calculate_wave_parameters
+- **01_partition_sar.py**: Process SAR (Sentinel-1) spectra
+- **02_partition_ww3.py**: Process WaveWatch III model spectra
+- **03_partition_ndbc.py**: Template for processing NDBC buoy data
+- **04_validate.py**: Compare and validate SAR vs WW3 results
 
-# Seu espectro 2D (freq x dir)
-E = np.array(...)  # matriz de energia espectral [m²/Hz/rad]
-freq = np.array(...)  # frequências [Hz]
-dirs = np.array(...)  # direções [graus, convenção oceanográfica]
+## 🏗️ Project Structure
 
-# Particionar o espectro
-partitions = partition_spectrum(
-    E, freq, dirs,
-    energy_threshold=1e-6,
-    max_partitions=3
-)
-
-# Calcular parâmetros de cada partição
-for i, partition in enumerate(partitions):
-    params = calculate_wave_parameters(partition, freq, dirs)
-    print(f"Partição {i+1}:")
-    print(f"  Hs = {params['Hs']:.2f} m")
-    print(f"  Tp = {params['Tp']:.1f} s")
-    print(f"  Dp = {params['Dp']:.1f} deg")
+```
+wasp/
+├── src/
+│   └── wasp/              # Main package
+│       ├── partition.py   # Watershed partitioning algorithm
+│       ├── wave_params.py # Wave parameter calculations
+│       ├── io_sar.py      # SAR data I/O
+│       ├── io_ww3.py      # WW3 data I/O
+│       └── utils.py       # Utility functions
+├── examples/              # Usage examples
+└── docs/                  # Documentation
 ```
 
-### Scripts de Exemplo
+## 📄 License
 
-Veja a pasta [examples/](examples/) para scripts completos:
+This project is licensed under the MIT License.
 
-- **01_partition_sar.py**: Processar espectros SAR (Sentinel-1)
-- **02_partition_ww3.py**: Processar espectros WaveWatch III
-- **03_partition_ndbc.py**: Template para processar dados de bóia NDBC
-- **04_validate.py**: Comparar e validar resultados SAR vs WW3
+## 🤝 Contributing
 
-```bash
-cd examples/
-python 01_partition_sar.py
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📧 Contact
+
+For questions or issues, please open an issue on [GitHub](https://github.com/jtcarvalho/wasp/issues).

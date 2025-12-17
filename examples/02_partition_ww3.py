@@ -1,14 +1,14 @@
 """
-PASSO 3: Particionar espectros WW3
+STEP 2: Partition WW3 Spectra
 
-Este script processa espectros 2D do modelo WW3, aplica o algoritmo de particionamento
-e salva os resultados em CSV.
+This script processes 2D WW3 model spectra, applies the partitioning algorithm,
+and saves the results to CSV.
 
 Workflow:
-1. Lê coordenadas/timestamps do arquivo auxiliar
-2. Para cada ponto, carrega espectro WW3 no tempo mais próximo
-3. Aplica algoritmo watershed de particionamento
-4. Salva Hs, Tp, Dp para cada partição identificada
+1. Read coordinates/timestamps from auxiliary file
+2. For each point, load WW3 spectrum at closest time
+3. Apply watershed partitioning algorithm
+4. Save Hs, Tp, Dp for each identified partition
 """
 
 import os
@@ -16,13 +16,13 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 
-# Importar do pacote wasp
+# Import from wasp package
 from wasp.io_ww3 import find_closest_time, load_ww3_spectrum
 from wasp.wave_params import calculate_wave_parameters
 from wasp.partition import partition_spectrum
 
 # ============================================================================
-# CONFIGURAÇÃO
+# CONFIGURATION
 # ============================================================================
 
 #case = 'lee'

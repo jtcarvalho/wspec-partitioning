@@ -1,103 +1,103 @@
 """
-Template para Particionar Espectros de Bóia NDBC
+Template for Partitioning NDBC Buoy Spectra
 
-Este é um template inicial para você adaptar aos seus dados de bóia.
-Ajuste conforme necessário para o formato específico dos seus arquivos.
+This is an initial template for you to adapt to your buoy data.
+Adjust as needed for the specific format of your files.
 """
 
 import os
 import pandas as pd
 import numpy as np
 
-# Importar do pacote wasp
+# Import from wasp package
 from wasp.wave_params import calculate_wave_parameters
 from wasp.partition import partition_spectrum
 
 
 # ============================================================================
-# CONFIGURAÇÃO
+# CONFIGURATION
 # ============================================================================
 
-# Diretórios
-INPUT_DIR = '/caminho/para/seus/dados/ndbc'      # ← AJUSTE AQUI
+# Directories
+INPUT_DIR = '/path/to/your/ndbc/data'      # ← ADJUST HERE
 OUTPUT_DIR = '../output/ndbc'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Parâmetros de particionamento
-ENERGY_THRESHOLD = 1e-6    # Ajuste baseado na energia típica da sua bóia
+# Partitioning parameters
+ENERGY_THRESHOLD = 1e-6    # Adjust based on typical energy of your buoy
 MAX_PARTITIONS = 5
 MIN_PARTITION_POINTS = 5
 
 
 # ============================================================================
-# FUNÇÕES AUXILIARES
+# HELPER FUNCTIONS
 # ============================================================================
 
 def load_ndbc_spectrum(filepath):
     """
-    Carrega espectro de bóia NDBC.
+    Load NDBC buoy spectrum.
     
-    VOCÊ PRECISA IMPLEMENTAR ESTA FUNÇÃO baseado no formato dos seus dados.
+    YOU NEED TO IMPLEMENT THIS FUNCTION based on your data format.
     
     Returns
     -------
     E : ndarray (NF, ND)
-        Espectro 2D em m²/Hz/rad
+        2D spectrum in m²/Hz/rad
     freq : ndarray (NF,)
-        Frequências em Hz
+        Frequencies in Hz
     dirs : ndarray (ND,)
-        Direções em graus (convenção oceanográfica - para onde vai)
+        Directions in degrees (oceanographic convention - going to)
     metadata : dict
-        Informações adicionais (timestamp, lat, lon, etc.)
+        Additional information (timestamp, lat, lon, etc.)
     """
     
-    # EXEMPLO - AJUSTE PARA SEU FORMATO
-    # Opção 1: Se seus dados estão em CSV
+    # EXAMPLE - ADJUST FOR YOUR FORMAT
+    # Option 1: If your data is in CSV
     # df = pd.read_csv(filepath)
     # E = df.values.reshape(NF, ND)
     
-    # Opção 2: Se seus dados estão em NetCDF
+    # Option 2: If your data is in NetCDF
     # import xarray as xr
     # ds = xr.open_dataset(filepath)
     # E = ds['energy'].values  # [freq x dir]
     # freq = ds['frequency'].values
     # dirs = ds['direction'].values
     
-    # IMPORTANTE: Verificar unidades e convenções
-    # - Energia deve estar em m²/Hz/rad
-    # - Se estiver em m²/Hz/deg, multiplique por π/180
-    # - Direção deve ser oceanográfica (para onde vai)
-    # - Se estiver meteorológica (de onde vem), converta:
+    # IMPORTANT: Check units and conventions
+    # - Energy must be in m²/Hz/rad
+    # - If in m²/Hz/deg, multiply by π/180
+    # - Direction must be oceanographic (going to)
+    # - If meteorological (coming from), convert:
     #   from wasp.utils import convert_meteorological_to_oceanographic
     #   dirs = convert_meteorological_to_oceanographic(dirs)
     
     raise NotImplementedError(
-        "Você precisa implementar a função load_ndbc_spectrum() "
-        "baseado no formato dos seus dados de bóia."
+        "You need to implement the load_ndbc_spectrum() function "
+        "based on your buoy data format."
     )
     
     # return E, freq, dirs, metadata
 
 
 # ============================================================================
-# PROCESSAMENTO PRINCIPAL
+# MAIN PROCESSING
 # ============================================================================
 
 def process_ndbc_station(station_file):
     """
-    Processa um arquivo de bóia e retorna partições.
+    Process a buoy file and return partitions.
     """
-    print(f"\nProcessando: {station_file}")
+    print(f"\nProcessing: {station_file}")
     
-    # 1. Carregar espectro
+    # 1. Load spectrum
     E, freq, dirs, metadata = load_ndbc_spectrum(station_file)
     
-    print(f"  Espectro: {E.shape[0]} freq x {E.shape[1]} dir")
+    print(f"  Spectrum: {E.shape[0]} freq x {E.shape[1]} dir")
     print(f"  Freq range: {freq.min():.3f} - {freq.max():.3f} Hz")
     print(f"  Dir range: {dirs.min():.1f} - {dirs.max():.1f} deg")
-    print(f"  Energia total: {np.sum(E):.2e} m²")
+    print(f"  Total energy: {np.sum(E):.2e} m²")
     
-    # 2. Aplicar particionamento
+    # 2. Apply partitioning
     partitions = partition_spectrum(
         E, freq, dirs,
         energy_threshold=ENERGY_THRESHOLD,
@@ -105,9 +105,9 @@ def process_ndbc_station(station_file):
         min_partition_points=MIN_PARTITION_POINTS
     )
     
-    print(f"  → {len(partitions)} partições identificadas")
+    print(f"  → {len(partitions)} partitions identified")
     
-    # 3. Calcular parâmetros de cada partição
+    # 3. Calculate parameters for each partition
     results = []
     
     for i, partition in enumerate(partitions):
@@ -139,25 +139,25 @@ def process_ndbc_station(station_file):
 
 def main():
     """
-    Processa todos os arquivos de bóia no diretório de entrada.
+    Process all buoy files in the input directory.
     """
     print("="*70)
-    print("PARTICIONAMENTO DE ESPECTROS NDBC")
+    print("NDBC SPECTRA PARTITIONING")
     print("="*70)
     
-    # Listar arquivos de entrada
-    # AJUSTE o padrão de busca conforme seus arquivos
+    # List input files
+    # ADJUST the search pattern according to your files
     import glob
-    buoy_files = glob.glob(os.path.join(INPUT_DIR, '*.nc'))  # ou *.csv, *.txt, etc.
+    buoy_files = glob.glob(os.path.join(INPUT_DIR, '*.nc'))  # or *.csv, *.txt, etc.
     
     if not buoy_files:
-        print(f"\n⚠️  Nenhum arquivo encontrado em {INPUT_DIR}")
-        print("   Ajuste INPUT_DIR e o padrão de busca no código.")
+        print(f"\n⚠️  No files found in {INPUT_DIR}")
+        print("   Adjust INPUT_DIR and search pattern in the code.")
         return
     
-    print(f"\nEncontrados {len(buoy_files)} arquivos")
+    print(f"\nFound {len(buoy_files)} files")
     
-    # Processar cada arquivo
+    # Process each file
     all_results = []
     
     for buoy_file in buoy_files:
@@ -165,18 +165,18 @@ def main():
             results = process_ndbc_station(buoy_file)
             all_results.extend(results)
         except Exception as e:
-            print(f"  ❌ Erro processando {buoy_file}: {e}")
+            print(f"  ❌ Error processing {buoy_file}: {e}")
             continue
     
-    # Salvar resultados
+    # Save results
     if all_results:
         df = pd.DataFrame(all_results)
         output_file = os.path.join(OUTPUT_DIR, 'ndbc_partitions.csv')
         df.to_csv(output_file, index=False)
-        print(f"\n✓ Resultados salvos em: {output_file}")
-        print(f"  Total de {len(all_results)} partições processadas")
+        print(f"\n✓ Results saved to: {output_file}")
+        print(f"  Total of {len(all_results)} partitions processed")
     else:
-        print("\n⚠️  Nenhum resultado para salvar")
+        print("\n⚠️  No results to save")
 
 
 if __name__ == '__main__':
