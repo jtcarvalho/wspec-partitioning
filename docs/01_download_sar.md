@@ -1,8 +1,8 @@
-# 📥 Download de Dados SAR Sentinel-1
+# 📥 Download of Dados SAR Sentinel-1
 
-## Fonte de Dados
+## Fonte of Dados
 
-Os dados de espectro de onda SAR do Sentinel-1A/B estão disponíveis no **Copernicus Marine Environment Monitoring Service (CMEMS)**:
+Os data of spectrum of wave SAR of Sentinel-1A/B estão disponíveis in the **Copernicus Marine Environment Monitoring Service (CMEMS)**:
 
 🔗 https://marine.copernicus.eu/
 
@@ -16,34 +16,34 @@ Os dados de espectro de onda SAR do Sentinel-1A/B estão disponíveis no **Coper
 - **Product ID**: `WAVE_GLO_PHY_SWH_L2_MY_014_006` (Multi-Year Reprocessed)
 
 ### Variáveis necessárias:
-- `wave_spec` ou `obs_params/wave_spec` - Espectro 2D de energia [m⁴]
-- `wavenumber_spec` - Número de onda [rad/m]
-- `direction_spec` - Direções [graus]
-- `time` - Timestamp da observação
+- `wave_spec` ou `obs_params/wave_spec` - Spectrum 2D of energy [m⁴]
+- `wavenumber_spec` - Number of wave [rad/m]
+- `direction_spec` - Directions [degrees]
+- `time` - Timestamp of the observation
 - `longitude`, `latitude` - Coordenadas
-- `L2_partition_quality_flag` - Flag de qualidade (0 = melhor)
+- `L2_partition_quality_flag` - Flag of quality (0 = best)
 
 ---
 
-## Passos para Download
+## Passos for Download
 
-### 1. Criar conta no CMEMS
+### 1. Create count in the CMEMS
 - Acesse: https://marine.copernicus.eu/
-- Crie uma conta gratuita (para pesquisa acadêmica)
+- Crie uma count gratuita (for pesquisa acadêmica)
 
-### 2. Selecionar região e período
+### 2. Selecionar região e period
 Para ciclones tropicais específicos, defina:
 
 **Ciclone Surigae (2021):**
-- Período: 15-25 Abril 2021
+- Period: 15-25 Abril 2021
 - Região: 5°N-25°N, 120°E-145°E
 
 **Ciclone Lee (2023):**
-- Período: 5-20 Setembro 2023
+- Period: 5-20 Setembro 2023
 - Região: 15°N-45°N, 70°W-40°W
 
 **Ciclone Freddy (2023):**
-- Período: 6-28 Fevereiro 2023
+- Period: 6-28 Fevereiro 2023
 - Região: 25°S-10°S, 40°E-75°E
 
 ### 3. Fazer download via Python (motu-client)
@@ -75,9 +75,9 @@ python -m motuclient \
 
 ---
 
-## Estrutura de Diretórios Esperada
+## Estrutura of Diretórios Esperada
 
-Após o download, organize os arquivos assim:
+Após o download, organize os files assim:
 
 ```
 /Users/jtakeo/data/sentinel1ab/
@@ -95,25 +95,25 @@ Após o download, organize os arquivos assim:
 
 ## Verificar Dados Baixados
 
-Use este snippet para verificar se o arquivo está correto:
+Use este snippet for verificar se o file está correto:
 
 ```python
 import xarray as xr
 
-# Carregar arquivo
+# Load file
 ds = xr.open_dataset('data/sentinel1ab/surigae/sar_surigae.nc', group='obs_params')
 
-# Verificar variáveis
-print("Variáveis disponíveis:", list(ds.variables.keys()))
+# Verificar variables
+print("Available variables:", list(ds.variables.keys()))
 
 # Verificar dimensões
 print("\nDimensões:")
 print(f"  Observações: {len(ds.time)}")
-print(f"  Frequências: {len(ds.wavenumber_spec)}")
-print(f"  Direções: {len(ds.direction_spec)}")
+print(f"  Frequencies: {len(ds.wavenumber_spec)}")
+print(f"  Directions: {len(ds.direction_spec)}")
 
-# Verificar range de datas
-print("\nPeríodo:")
+# Verificar range of datas
+print("\nPeriod:")
 print(f"  Início: {ds.time.values[0]}")
 print(f"  Fim: {ds.time.values[-1]}")
 ```
@@ -126,10 +126,10 @@ Se preferir interface gráfica:
 
 1. Acesse: https://data.marine.copernicus.eu/
 2. Busque por "Sentinel-1 Wave Spectra"
-3. Use o mapa interativo para selecionar região
-4. Defina período temporal
-5. Selecione variáveis necessárias
-6. Clique em "Download" e escolha formato NetCDF
+3. Use o mapa interativo for selecionar região
+4. Defina period temporal
+5. Selecione variables necessárias
+6. Clique in "Download" e escolha formato NetCDF
 
 ---
 
@@ -141,4 +141,4 @@ cd scripts
 python 01_partition_sar.py
 ```
 
-Veja o README principal para mais detalhes.
+Veja o README main for mais detalhes.

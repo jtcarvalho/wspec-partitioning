@@ -1,5 +1,5 @@
 """
-Funções para leitura e processamento de dados WW3
+Functions for leitura e processing of data WW3
 """
 
 import numpy as np
@@ -9,23 +9,23 @@ import xarray as xr
 
 def find_closest_time(file_path, target_time_dt):
     """
-    Encontra o timestamp mais próximo no dataset WW3 ao tempo alvo.
+    Find the closest timestamp in the WW3 dataset to the target time.
     
     Parameters:
     -----------
     file_path : str
-        Caminho do arquivo NetCDF do WW3
+        Path to WW3 NetCDF file
     target_time_dt : pd.Timestamp
-        Tempo alvo para buscar
+        Target time to search for
     
     Returns:
     --------
     itime : int
-        Índice do tempo mais próximo
+        Index of closest time
     closest_time : pd.Timestamp
-        Timestamp mais próximo encontrado
+        Closest timestamp found
     time_diff_hours : float
-        Diferença temporal em horas
+        Temporal difference in hours
     """
     ds_temp = xr.open_dataset(file_path)
     ww3_times = pd.to_datetime(ds_temp.time.values)
@@ -42,29 +42,29 @@ def find_closest_time(file_path, target_time_dt):
 
 def load_ww3_spectrum(file_path, time_index):
     """
-    Carrega espectro direcional 2D do WW3 e coordenadas.
+    Load 2D directional spectrum from WW3 and coordinates.
     
     Parameters:
     -----------
     file_path : str
-        Caminho do arquivo NetCDF do WW3
+        Path to WW3 NetCDF file
     time_index : int
-        Índice temporal a carregar
+        Temporal index to load
     
     Returns:
     --------
     E2d : ndarray (NF, ND)
-        Espectro direcional 2D [m²·s·rad⁻¹]
+        2D directional spectrum [m²·s·rad⁻¹]
     freq : ndarray (NF,)
-        Frequências [Hz]
+        Frequencies [Hz]
     dirs : ndarray (ND,)
-        Direções [graus]
+        Directions [degrees]
     dirs_rad : ndarray (ND,)
-        Direções [radianos]
+        Directions [radians]
     lon : float
-        Longitude do ponto
+        Point longitude
     lat : float
-        Latitude do ponto
+        Point latitude
     """
     ds = xr.open_dataset(file_path)
     

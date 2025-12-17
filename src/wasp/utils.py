@@ -4,60 +4,60 @@ from collections import Counter
 
 
 def convert_meteorological_to_oceanographic(met_dir):
-    """Converte direção meteorológica (de onde vem) para oceanográfica (para onde vai).
+    """Converts direction meteorological (coming from) for oceanographic (going to).
     
     Args:
-        met_dir: Direção meteorológica em graus (de onde o vento/onda vem)
+        met_dir: Direction meteorological in degrees (of where o vento/wave vem)
         
     Returns:
-        Direção oceanográfica em graus (para onde a onda vai)
+        Direction oceanographic in degrees (for where a wave vai)
     """
     return (met_dir + 180) % 360
 
 def convert_sar_energy_units(E_sar, k, phi):
-    """Converte espectro SAR de número de onda para frequência em m²·s·rad⁻¹ (igual ao WW3).
+    """Convert SAR spectrum from wavenumber to frequency in m²·s·rad⁻¹ (same as WW3).
     
-    Conversão correta usando apenas o jacobiano da relação de dispersão:
+    Conversion correct using only o Jacobian of the relation of dispersion:
     E(f,θ) [m²·s·rad⁻¹] = E(k,θ) [m⁴] × |dk/df| × (π/180)
     
-    Onde:
-    - |dk/df| = 8π²f/g  (jacobiano da relação de dispersão ω² = gk)
-    - π/180 converte de θ[graus] para θ[radianos]
+    Where:
+    - |dk/df| = 8π²f/g  (Jacobian of the relation of dispersion ω² = gk)
+    - π/180 converts of θ[degrees] for θ[radians]
     """
     
     g = 9.81
     omega = np.sqrt(g * k)
     freq = omega / (2 * np.pi)
     
-    # Jacobiano da transformação k -> f
-    # Da relação de dispersão: ω² = gk, onde ω = 2πf
+    # Jacobian of k -> f transformation
+    # From dispersion relation: ω² = gk, where ω = 2πf
     # Diferenciando: 2ω dω = g dk
     # Portanto: dk/dω = 2ω/g = 2√(gk)/g
     # Como dω = 2π df, temos: dk/df = dk/dω × dω/df = (2ω/g) × 2π = 4πω/g
     # Substituindo ω = √(gk): dk/df = 4π√(gk)/g
-    # Mas para f: ω = 2πf, então √(gk) = 2πf, logo: dk/df = 8π²f/g
+    # But for f: ω = 2πf, so √(gk) = 2πf, thus: dk/df = 8π²f/g
     dkdf = 8 * np.pi**2 * freq / g
     dkdf_matrix = dkdf.reshape(-1, 1)
     
-    # Conversão de direção: graus -> radianos na densidade espectral
-    # Como o SAR fornece E em bins de graus, precisamos converter para rad⁻¹
+    # Conversion of direction: degrees -> radians in the densidade espectral
+    # Como o SAR fornece E in bins of degrees, precisamos convert for rad⁻¹
     # A integral ∫E dθ deve ser invariante: ∫E(θ_deg) dθ_deg = ∫E(θ_rad) dθ_rad
     # Como dθ_rad = (π/180) dθ_deg, temos: E(θ_rad) = E(θ_deg) × (π/180)
     deg_to_rad_factor = np.pi / 180.0
     
     # E(k,θ) [m⁴] -> E(f,θ) [m²·s·rad⁻¹]
-    # Fórmula correta: E(f,θ) = E(k,θ) × |dk/df| × (π/180)
+    # Correct formula: E(f,θ) = E(k,θ) × |dk/df| × (π/180)
     E_m2_s_rad = E_sar * dkdf_matrix * deg_to_rad_factor
     
-    # Ajuste shape para (NF, ND)
+    # Ajuste shape for (NF, ND)
     if E_m2_s_rad.shape[0] != len(freq):
         E_m2_s_rad = E_m2_s_rad.T
     
-    # Dados SAR já estão em convenção oceanográfica (direção PARA onde vai)
+    # SAR data already in oceanographic convention (direction going to)
     phi_oceanographic = phi
     dirs_rad = np.radians(phi_oceanographic)
     
-    # Cálculo de m0 e Hs para diagnóstico (usando integração trapezoidal)
+    # Calculation of m0 and Hs for diagnostic (using trapezoidal integration)
     ddir = 2 * np.pi / len(phi)
     m0 = 0
     for j in range(len(phi)):
@@ -65,17 +65,17 @@ def convert_sar_energy_units(E_sar, k, phi):
     hs = 4 * np.sqrt(m0)
     
     print(f"╔══════════════════════════════════════════════════════════════╗")
-    print(f"║         CONVERSÃO SAR: m⁴ → m²·s·rad⁻¹ (WW3 units)          ║")
+    print(f"║         SAR CONVERSION: m⁴ → m²·s·rad⁻¹ (WW3 units)          ║")
     print(f"╠══════════════════════════════════════════════════════════════╣")
     print(f"║ Shape: {str(E_sar.shape):>52} ║")
-    print(f"║ Frequências: {len(freq):>2d} bins | Direções: {len(phi):>2d} bins              ║")
+    print(f"║ Frequencies: {len(freq):>2d} bins | Directions: {len(phi):>2d} bins              ║")
     print(f"║ Freq range: {freq[0]:.4f} - {freq[-1]:.4f} Hz                       ║")
     print(f"║ Dir range: {phi[0]:.1f}° - {phi[-1]:.1f}°                            ║")
     print(f"╟──────────────────────────────────────────────────────────────╢")
     print(f"║ Jacobiano dk/df: {np.min(dkdf):.4f} - {np.max(dkdf):.4f}                   ║")
     print(f"║ Fator angular (π/180): {deg_to_rad_factor:.6f}                      ║")
     print(f"╟──────────────────────────────────────────────────────────────╢")
-    print(f"║ Parâmetros integrados:                                       ║")
+    print(f"║ Parameters integrated:                                       ║")
     print(f"║   m0 = {m0:>10.6f} m²                                          ║")
     print(f"║   Hs = {hs:>10.6f} m                                           ║")
     print(f"╚══════════════════════════════════════════════════════════════╝")
@@ -83,14 +83,14 @@ def convert_sar_energy_units(E_sar, k, phi):
     return E_m2_s_rad, freq, phi_oceanographic, dirs_rad
 
 def convert_spectrum_units(E2d, freq, dirs, from_unit, to_unit):
-    """Converte espectro entre diferentes unidades de energia."""
-    # Se unidades forem iguais, retornar cópia do original
+    """Converts spectrum between diferentes unidades of energy."""
+    # If units are equal, return copy of original
     if from_unit == to_unit:
         return E2d.copy()
     
     result = E2d.copy()
     
-    # Conversões entre unidades
+    # Conversions between units
     if from_unit == "m2_s_rad" and to_unit == "m2_Hz_rad":
         result = result / (2 * np.pi)
     elif from_unit == "m2_Hz_rad" and to_unit == "m2_s_rad":
@@ -103,19 +103,19 @@ def convert_spectrum_units(E2d, freq, dirs, from_unit, to_unit):
     return result
 
 def load_sar_spectrum(ds, date_time=None, index=0):
-    """Carrega espectro SAR para data/hora específica, compatível com arquivos preprocessados Sentinel-1A/B (CMEMS).
+    """Load SAR spectrum for specific date/time, compatible with preprocessed Sentinel-1A/B (CMEMS) files.
     
-    Converte automaticamente de SAR (m⁴) para m²·s·rad⁻¹ (igual ao WW3).
+    Automatically converts from SAR (m⁴) to m²·s·rad⁻¹ (same as WW3).
     """
-    print("Variáveis disponíveis no arquivo SAR:", list(ds.variables.keys()))
-    # Busca variável por múltiplos nomes possíveis
+    print("Available variables in SAR file:", list(ds.variables.keys()))
+    # Search variable by multiple possible names
     def get_var(ds, varnames):
         for var in varnames:
             if var in ds.variables:
                 return ds[var].values
-        raise ValueError(f"Nenhuma das variáveis {varnames} encontrada no arquivo SAR.")
+        raise ValueError(f"None of variables {varnames} found in the file SAR.")
 
-    # Nomes possíveis para cada variável
+    # Nomes possible for each variable
     wave_spec_names = ['wave_spec', 'obs_params/wave_spec', 'wave_spectrum', 'obs_params/wave_spectrum']
     k_names = ['wavenumber_spec', 'obs_params/wavenumber_spec']
     phi_names = ['direction_spec', 'obs_params/direction_spec']
@@ -125,7 +125,7 @@ def load_sar_spectrum(ds, date_time=None, index=0):
         E_sar = get_var(ds, wave_spec_names)  # (NF, ND, Nobs)
         k = get_var(ds, k_names)  # (NF,)
         phi = get_var(ds, phi_names)  # (ND,)
-        # Tempo
+        # Time
         times = None
         for tname in time_names:
             if tname in ds.variables:
@@ -145,7 +145,7 @@ def load_sar_spectrum(ds, date_time=None, index=0):
         else:
             E_sar = np.squeeze(E_sar)
             actual_time = pd.to_datetime(times[0]) if times is not None else None
-        print(f"Usando arquivo preprocessado (CMEMS), shape E_sar: {E_sar.shape}")
+        print(f"Usando file preprocessado (CMEMS), shape E_sar: {E_sar.shape}")
     except Exception as e:
         # Tenta formato antigo
         if 'oswPolSpec' in ds.variables:
@@ -168,55 +168,55 @@ def load_sar_spectrum(ds, date_time=None, index=0):
                     actual_time = None
             k = ds.oswK.values
             phi = ds.oswPhi.values
-            print(f"Usando arquivo SAR antigo, shape E_sar: {E_sar.shape}")
+            print(f"Usando file SAR antigo, shape E_sar: {E_sar.shape}")
         else:
-            raise ValueError("Arquivo SAR não possui variáveis reconhecidas (nem wave_spec nem oswPolSpec)")
+            raise ValueError("File SAR not has variables recognized (nor wave_spec nor oswPolSpec)")
 
     print(f"Shape k: {k.shape}")
     print(f"Shape phi: {phi.shape}")
-    # Converter SAR (m⁴) para m²·s·rad⁻¹ (igual ao WW3)
+    # Convert SAR (m⁴) to m²·s·rad⁻¹ (same as WW3)
     E2d, freq, dirs, dirs_rad = convert_sar_energy_units(E_sar, k, phi)
     return E2d, freq, dirs, dirs_rad, actual_time
 
 def spectrum1d_from_2d(E2d, dirs_rad):
-    """Integra espectro 2D para obter espectro 1D E(f) usando integração trapezoidal em direção."""
+    """Integrates spectrum 2D for obtain spectrum 1D E(f) using integration trapezoidal in direction."""
     E2d = np.where(np.isfinite(E2d) & (E2d >= 0), E2d, 0)
     ddir = 2 * np.pi / len(dirs_rad)
     spec1d = np.sum(E2d, axis=1) * ddir
     return spec1d, ddir
 
 def calculate_wave_parameters(E2d, freq, dirs_rad):
-    """Calcula Hs, Tp, Dp e outros parâmetros do espectro usando integração trapezoidal."""
-    # Limpar dados inválidos
+    """Calculates Hs, Tp, Dp e outros parameters of spectrum using integration trapezoidal."""
+    # Clean data invalid
     E2d_clean = np.where(np.isfinite(E2d) & (E2d >= 0), E2d, 0)
     
-    # Calcular incremento direcional
+    # Calculate increment directional
     ddir = 2 * np.pi / len(dirs_rad)
     
-    # Calcular incrementos de frequência para compatibilidade com código antigo
+    # Calculate frequency increments for compatibility with old code
     delf = np.zeros_like(freq)
     for i in range(len(freq)-1):
         delf[i] = freq[i+1] - freq[i]
     delf[-1] = delf[-2]
     
-    # Calcular momento espectral m0 usando integração trapezoidal em frequência
+    # Calculate moment espectral m0 using integration trapezoidal in frequency
     m0 = 0
     for j in range(len(dirs_rad)):
         m0 += np.trapezoid(E2d_clean[:, j], freq) * ddir
     
-    # Calcular espectro 1D para encontrar pico
+    # Calculate spectrum 1D for find peak
     spec1d = np.sum(E2d_clean, axis=1) * ddir
-    # Calcular altura significativa
+    # Calculate height significant
     hs = 4 * np.sqrt(m0) if m0 > 0 else 0.0
     
-    # Encontrar pico no espectro de frequência
+    # Findr peak in the spectrum of frequency
     i_peak = np.argmax(spec1d) if np.max(spec1d) > 0 else 0
     tp = 1.0 / freq[i_peak] if i_peak < len(freq) and freq[i_peak] > 0 else np.nan
     
-    # Encontrar direção no pico
+    # Findr direction in the peak
     j_peak = np.argmax(E2d[i_peak, :]) if i_peak < len(freq) else 0
     
-    # Calcular direção média ponderada no pico
+    # Calculate direction mean weighted in the peak
     if np.any(E2d[i_peak, :] > 0):
         weighted_dir = np.sum(E2d[i_peak, :] * dirs_rad) / np.sum(E2d[i_peak, :])
         dp = np.degrees(weighted_dir) % 360
@@ -346,7 +346,7 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
     tick_interval = 8
     cbar.set_ticks(np.arange(vmin, vmax + 0.5 * tick_interval, tick_interval))
 
-    # Ajuste manual ao invés de tight_layout
+    # Manual adjustment instead of tight_layout
     fig.subplots_adjust(left=0.06, right=0.86, top=0.9, bottom=0.05)
 
     plt.show()

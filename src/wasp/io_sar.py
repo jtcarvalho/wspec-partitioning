@@ -1,5 +1,5 @@
 """
-Funções para leitura e conversão de dados SAR (Sentinel-1)
+Functions for leitura e conversion of data SAR (Sentinel-1)
 """
 
 import numpy as np
@@ -8,61 +8,61 @@ import pandas as pd
 
 def convert_sar_energy_units(E_sar, k, phi):
     """
-    Converte espectro SAR de número de onda para frequência em m²·s·rad⁻¹ (padrão WW3).
+    Converts spectrum SAR of wavenumber for frequency in m²·s·rad⁻¹ (standard WW3).
     
-    Aplica conversão usando o jacobiano da relação de dispersão:
+    Apply conversion using o Jacobian of the relation of dispersion:
     E(f,θ) [m²·s·rad⁻¹] = E(k,θ) [m⁴] × |dk/df| × (π/180)
     
-    Onde:
-    - |dk/df| = 8π²f/g  (jacobiano da relação de dispersão ω² = gk)
-    - π/180 converte de θ[graus] para θ[radianos]
+    Where:
+    - |dk/df| = 8π²f/g  (Jacobian of the relation of dispersion ω² = gk)
+    - π/180 converts of θ[degrees] for θ[radians]
     
     Parameters:
     -----------
     E_sar : ndarray
-        Espectro SAR em número de onda [m⁴]
+        Spectrum SAR in wavenumber [m⁴]
     k : ndarray
-        Números de onda [rad/m]
+        Numbers of wave [rad/m]
     phi : ndarray
-        Direções [graus]
+        Directions [degrees]
     
     Returns:
     --------
     E_m2_s_rad : ndarray (NF, ND)
-        Espectro convertido [m²·s·rad⁻¹]
+        Spectrum convertido [m²·s·rad⁻¹]
     freq : ndarray (NF,)
-        Frequências [Hz]
+        Frequencies [Hz]
     phi_oceanographic : ndarray (ND,)
-        Direções oceanográficas [graus]
+        Directions oceanographic [degrees]
     dirs_rad : ndarray (ND,)
-        Direções em radianos
+        Directions in radians
     """
     g = 9.81
     omega = np.sqrt(g * k)
     freq = omega / (2 * np.pi)
     
-    # Jacobiano da transformação k -> f
-    # Da relação de dispersão: ω² = gk, onde ω = 2πf
+    # Jacobian of k -> f transformation
+    # From dispersion relation: ω² = gk, where ω = 2πf
     # dk/df = 8π²f/g
     dkdf = 8 * np.pi**2 * freq / g
     dkdf_matrix = dkdf.reshape(-1, 1)
     
-    # Conversão de direção: graus -> radianos na densidade espectral
+    # Conversion of direction: degrees -> radians in the densidade espectral
     # E(θ_rad) = E(θ_deg) × (π/180)
     deg_to_rad_factor = np.pi / 180.0
     
     # E(k,θ) [m⁴] -> E(f,θ) [m²·s·rad⁻¹]
     E_m2_s_rad = E_sar * dkdf_matrix * deg_to_rad_factor
     
-    # Ajuste shape para (NF, ND)
+    # Ajuste shape for (NF, ND)
     if E_m2_s_rad.shape[0] != len(freq):
         E_m2_s_rad = E_m2_s_rad.T
     
-    # Dados SAR já estão em convenção oceanográfica (direção PARA onde vai)
+    # SAR data already in oceanographic convention (direction going to)
     phi_oceanographic = phi
     dirs_rad = np.radians(phi_oceanographic)
     
-    # Diagnóstico: calcular m0 e Hs
+    # Diagnostic: calculate m0 and Hs
     ddir = 2 * np.pi / len(phi)
     m0 = 0
     for j in range(len(phi)):
@@ -72,17 +72,17 @@ def convert_sar_energy_units(E_sar, k, phi):
     hs = 4 * np.sqrt(m0)
     
     print(f"╔══════════════════════════════════════════════════════════════╗")
-    print(f"║         CONVERSÃO SAR: m⁴ → m²·s·rad⁻¹ (WW3 units)          ║")
+    print(f"║         SAR CONVERSION: m⁴ → m²·s·rad⁻¹ (WW3 units)          ║")
     print(f"╠══════════════════════════════════════════════════════════════╣")
     print(f"║ Shape: {str(E_sar.shape):>52} ║")
-    print(f"║ Frequências: {len(freq):>2d} bins | Direções: {len(phi):>2d} bins              ║")
+    print(f"║ Frequencies: {len(freq):>2d} bins | Directions: {len(phi):>2d} bins              ║")
     print(f"║ Freq range: {freq[0]:.4f} - {freq[-1]:.4f} Hz                       ║")
     print(f"║ Dir range: {phi[0]:.1f}° - {phi[-1]:.1f}°                            ║")
     print(f"╟──────────────────────────────────────────────────────────────╢")
     print(f"║ Jacobiano dk/df: {np.min(dkdf):.4f} - {np.max(dkdf):.4f}                   ║")
     print(f"║ Fator angular (π/180): {deg_to_rad_factor:.6f}                      ║")
     print(f"╟──────────────────────────────────────────────────────────────╢")
-    print(f"║ Parâmetros integrados:                                       ║")
+    print(f"║ Parameters integrated:                                       ║")
     print(f"║   m0 = {m0:>10.6f} m²                                          ║")
     print(f"║   Hs = {hs:>10.6f} m                                           ║")
     print(f"╚══════════════════════════════════════════════════════════════╝")
@@ -92,43 +92,43 @@ def convert_sar_energy_units(E_sar, k, phi):
 
 def load_sar_spectrum(ds, date_time=None, index=0):
     """
-    Carrega espectro SAR para data/hora específica.
+    Load SAR spectrum for specific date/time.
     
-    Compatível com arquivos preprocessados Sentinel-1A/B (CMEMS).
-    Converte automaticamente de SAR (m⁴) para m²·s·rad⁻¹ (padrão WW3).
+    Compatible with preprocessed Sentinel-1A/B files (CMEMS).
+    Automatically converts from SAR (m⁴) to m²·s·rad⁻¹ (WW3 standard).
     
     Parameters:
     -----------
     ds : xarray.Dataset
-        Dataset SAR aberto
+        Opened SAR dataset
     date_time : str or pd.Timestamp, optional
-        Data/hora específica para buscar. Se None, usa index.
+        Specific date/time to search for. If None, uses index.
     index : int
-        Índice da observação a carregar (usado se date_time=None)
+        Index of the observation to load (used if date_time=None)
     
     Returns:
     --------
     E2d : ndarray (NF, ND)
-        Espectro direcional 2D [m²·s·rad⁻¹]
+        Spectrum directional 2D [m²·s·rad⁻¹]
     freq : ndarray (NF,)
-        Frequências [Hz]
+        Frequencies [Hz]
     dirs : ndarray (ND,)
-        Direções [graus]
+        Directions [degrees]
     dirs_rad : ndarray (ND,)
-        Direções [radianos]
+        Directions [radians]
     actual_time : pd.Timestamp
-        Timestamp da observação carregada
+        Timestamp of the observation loaded
     """
-    print("Variáveis disponíveis no arquivo SAR:", list(ds.variables.keys()))
+    print("Available variables in SAR file:", list(ds.variables.keys()))
     
-    # Função auxiliar para buscar variável por múltiplos nomes possíveis
+    # Auxiliary function to search for variable by multiple possible names
     def get_var(ds, varnames):
         for var in varnames:
             if var in ds.variables:
                 return ds[var].values
-        raise ValueError(f"Nenhuma das variáveis {varnames} encontrada no arquivo SAR.")
+        raise ValueError(f"None of variables {varnames} found in the file SAR.")
 
-    # Nomes possíveis para cada variável
+    # Nomes possible for each variable
     wave_spec_names = ['wave_spec', 'obs_params/wave_spec', 'wave_spectrum', 
                        'obs_params/wave_spectrum']
     k_names = ['wavenumber_spec', 'obs_params/wavenumber_spec']
@@ -142,14 +142,14 @@ def load_sar_spectrum(ds, date_time=None, index=0):
         k = get_var(ds, k_names)  # (NF,)
         phi = get_var(ds, phi_names)  # (ND,)
         
-        # Buscar tempo
+        # Buscar time
         times = None
         for tname in time_names:
             if tname in ds.variables:
                 times = ds[tname].values
                 break
         
-        # Selecionar observação específica
+        # Select specific observation
         nobs = E_sar.shape[2] if E_sar.ndim == 3 else 1
         if nobs > 1:
             if date_time is not None and times is not None:
@@ -165,7 +165,7 @@ def load_sar_spectrum(ds, date_time=None, index=0):
             E_sar = np.squeeze(E_sar)
             actual_time = pd.to_datetime(times[0]) if times is not None else None
         
-        print(f"Usando arquivo preprocessado (CMEMS), shape E_sar: {E_sar.shape}")
+        print(f"Usando file preprocessado (CMEMS), shape E_sar: {E_sar.shape}")
     
     except Exception as e:
         # Tentar formato antigo (oswPolSpec)
@@ -189,15 +189,15 @@ def load_sar_spectrum(ds, date_time=None, index=0):
                     actual_time = None
             k = ds.oswK.values
             phi = ds.oswPhi.values
-            print(f"Usando arquivo SAR antigo, shape E_sar: {E_sar.shape}")
+            print(f"Usando file SAR antigo, shape E_sar: {E_sar.shape}")
         else:
-            raise ValueError("Arquivo SAR não possui variáveis reconhecidas "
-                           "(nem wave_spec nem oswPolSpec)")
+            raise ValueError("File SAR not has variables recognized "
+                           "(nor wave_spec nor oswPolSpec)")
 
     print(f"Shape k: {k.shape}")
     print(f"Shape phi: {phi.shape}")
     
-    # Converter SAR (m⁴) para m²·s·rad⁻¹ (padrão WW3)
+    # Convert SAR (m⁴) to m²·s·rad⁻¹ (WW3 standard)
     E2d, freq, dirs, dirs_rad = convert_sar_energy_units(E_sar, k, phi)
     
     return E2d, freq, dirs, dirs_rad, actual_time

@@ -1,7 +1,9 @@
 # Ignorar arquivos de dados grandes e temporários
 
+PYPI_PUBLISHING_GUIDE.md
 requirements.txt
 environment.yml
+translate_to_english.py
 GUIA_USO.md
 TRANSFORMACAO_CONCLUIDA.md
 docs/README_NEW.md

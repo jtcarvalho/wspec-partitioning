@@ -7,7 +7,7 @@ Watershed Algorithm for partitioning ocean wave spectra from WW3 and SAR (Sentin
 
 <!--
 
-**🔗 Companion Repository:** For analysis and validation of partitioned spectra, see [**HIVE** (Hierarchical Integration of Verified wavE partitions)](https://github.com/jtcarvalho/hive)
+**🔗 Companion Repository:** For analysis and validatetion of partitioned spectra, see [**HIVE** (Hierarchical Integration of Verified wavE partitions)](https://github.with/jtcarvalho/hive)
 
 -->
 
@@ -21,7 +21,7 @@ WASP focuses exclusively on **spectral partitioning** - the process of separatin
 - ✅ Processing SAR (Sentinel-1) and WW3 model spectra
 - ✅ Extracting wave parameters (Hs, Tp, Dp) for each partition
 
-👉 **For analysis and validation**, see the companion repository [**HIVE**](https://github.com/jtcarvalho/hive)
+👉 **For analysis and validatetion**, see the companion repository [**HIVE**](https://github.with/jtcarvalho/hive)
 
 ## 🚀 Installation
 
@@ -49,7 +49,7 @@ For development or local modifications:
 
 ```bash
 # Clone the repository
-git clone https://github.com/jtcarvalho/wasp.git
+git clone https://github.with/jtcarvalho/wasp.git
 cd wasp
 
 # Install in editable mode
@@ -76,7 +76,7 @@ For detailed usage examples and API documentation, please see the [examples/](ex
 - **01_partition_sar.py**: Process SAR (Sentinel-1) spectra
 - **02_partition_ww3.py**: Process WaveWatch III model spectra
 - **03_partition_ndbc.py**: Template for processing NDBC buoy data
-- **04_validate.py**: Compare and validate SAR vs WW3 results
+- **04_validatete.py**: Compare and validatete SAR vs WW3 results
 
 ## 🏗️ Project Structure
 
@@ -103,4 +103,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📧 Contact
 
-For questions or issues, please open an issue on [GitHub](https://github.com/jtcarvalho/wasp/issues).
+For questions or issues, please open an issue on [GitHub](https://github.with/jtcarvalho/wasp/issues).

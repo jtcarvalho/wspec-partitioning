@@ -1,5 +1,5 @@
 """
-Funções para plotagem de espectros direcionais e visualizações
+Functions for plotting of spectra directional e visualizations
 """
 
 import numpy as np
@@ -10,31 +10,31 @@ from matplotlib.cm import ScalarMappable
 
 def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=None, dp=None):
     """
-    Plot espectro direcional 2D em coordenadas polares.
+    Plot 2D directional spectrum in polar coordinates.
     
     Parameters:
     -----------
     E2d : ndarray
-        Espectro direcional 2D [m²·s·rad⁻¹]
+        Spectrum directional 2D [m²·s·rad⁻¹]
     freq : ndarray
-        Array de frequências [Hz]
+        Array of frequencies [Hz]
     dirs : ndarray
-        Array de direções [graus]
+        Array of directions [degrees]
     selected_time : datetime, optional
-        Timestamp dos dados
+        Timestamp dos data
     hs : float, optional
-        Altura significativa [m]
+        Height significant [m]
     tp : float, optional
-        Período de pico [s]
+        Period of peak [s]
     dp : float, optional
-        Direção de pico [graus]
+        Direction of peak [degrees]
     
     Returns:
     --------
     fig : matplotlib.figure.Figure
         Figura gerada
     ax : matplotlib.axes.Axes
-        Eixos polares da figura
+        Eixos polares of the figura
     """
     Eplot = np.nan_to_num(E2d, nan=0.0, neginf=0.0, posinf=0.0)
 
@@ -42,13 +42,13 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
     freq_plot = np.asarray(freq).flatten()
     dirs_plot = np.asarray(dirs).flatten()
 
-    # Converter direções para radianos e ordenar
+    # Convert directions for radians e ordenar
     dirs_rad_plot = np.radians(dirs_plot)
     sort_idx = np.argsort(dirs_rad_plot)
     dirs_sorted = dirs_rad_plot[sort_idx]
     Eplot_sorted = Eplot[:, sort_idx]
 
-    # Garantir continuidade periódica (0 a 2π)
+    # Ensure periodic continuity (0 to 2π)
     if not np.isclose(dirs_sorted[0], 0.0):
         dirs_sorted = np.insert(dirs_sorted, 0, 0.0)
         Eplot_sorted = np.insert(Eplot_sorted, 0, Eplot_sorted[:, 0], axis=1)
@@ -56,13 +56,13 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
         dirs_sorted = np.append(dirs_sorted, 2*np.pi)
         Eplot_sorted = np.concatenate([Eplot_sorted, Eplot_sorted[:, 0:1]], axis=1)
 
-    # Eixo radial = período (s)
+    # Eixo radial = period (s)
     with np.errstate(divide='ignore', invalid='ignore'):
         period = np.where(freq_plot > 0, 1.0 / freq_plot, 0)
 
     theta, r = np.meshgrid(dirs_sorted, period)
 
-    # Escalas de cor
+    # Escalas of cor
     vmin = 2.
     vmax = 66.
     levels = np.arange(vmin, vmax+2, 2)
@@ -72,7 +72,7 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
 
     cs = ax.contour(theta, r, Eplot_sorted, levels, cmap='rainbow', vmin=vmin, vmax=vmax)
 
-    # Estilo dos eixos
+    # Estilo dos axes
     ax.set_theta_zero_location('N')
     ax.set_theta_direction(-1)
     ax.set_rticks([5, 10, 15, 20])
@@ -88,7 +88,7 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
     title = 'Directional Spectrum'
     ax.set_title(title, fontsize=16, color='k', pad=30)
 
-    # Caixa de estatísticas (se houver dados)
+    # Statistics box (if there is data)
     show_stats = selected_time is not None or hs is not None or tp is not None or dp is not None
     if show_stats:
         stats_ax = fig.add_axes([0.75, 0.7, 0.2, 0.15], facecolor='white')
@@ -116,7 +116,7 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time=None, hs=None, tp=N
         if dp is not None:
             stats_ax.text(0.7, y_offset, f'Dp: {dp:.1f}°', fontsize=12, color='k', ha='center', va='center')
 
-    # Barra de cores
+    # Barra of cores
     colorbar_label = 'm²·s·rad⁻¹'
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
     sm = ScalarMappable(cmap='rainbow', norm=norm)

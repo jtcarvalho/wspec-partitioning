@@ -1,14 +1,14 @@
 """
-STEP 4: Validate SAR vs WW3
+STEP 4: Validatete SAR vs WW3
 
 This script compares SAR and WW3 partitioning results, matching
-similar partitions and generating validation metrics and plots.
+similar partitions and generating validatetion metrics and plots.
 
 Workflow:
 1. Load SAR and WW3 partitioning CSVs
 2. Match partitions based on Tp and Dp
 3. Generate paired partition files (partition1.csv, partition2.csv, partition3.csv)
-4. Create scatter plots comparing SAR vs WW3
+4. Create dispersion plots comparing SAR vs WW3
 5. Calculate statistical metrics (bias, RMSE, correlation)
 """
 
@@ -31,28 +31,28 @@ matplotlib.use('Agg')  # Non-interactive backend for saving figures
 # case = 'freddy'
 case = 'all'
 
-# Diretórios
+# Directories
 WW3_DIR = f'../data/{case}/partition'
 SAR_DIR = f'../data/{case}/partition'
 OUTPUT_DIR = f'../output/{case}'
 
 # Filtros
-QUALITY_FLAG_OPTIONS = [0]  # Apenas dados SAR de alta qualidade (0 = melhor)
+QUALITY_FLAG_OPTIONS = [0]  # Apenas data SAR of high quality (0 = best)
 
-# Critérios de matching de partições
-TP_TOLERANCE = 2.0   # Tolerância em período de pico [s]
-DP_TOLERANCE = 30.0  # Tolerância em direção de pico [graus]
-TP_MIN_THRESHOLD = 12.0  # SAR não é confiável para Tp < 10s (wind sea)
-MAX_TIME_DIFF_HOURS = 1.0  # Diferença temporal máxima aceitável [horas]
+# Partition matching criteria
+TP_TOLERANCE = 2.0   # Tolerance in peak period [s]
+DP_TOLERANCE = 30.0  # Tolerance in peak direction [degrees]
+TP_MIN_THRESHOLD = 12.0  # SAR not reliable for Tp < 10s (wind sea)
+MAX_TIME_DIFF_HOURS = 1.0  # Maximum acceptable temporal difference [hours]
 
-# Limites dos gráficos
+# Plot limits
 PLOT_LIMITS = {
     'Hs': (0, 8),
     'Tp': (4, 20),
     'Dp': (0, 360)
 }
 
-# Variáveis para comparar
+# Variables to compare
 COMPARISON_VARIABLES = [
     'total_Hs', 'total_Tp', 'total_Dp',
     'P1_Hs', 'P1_Tp', 'P1_Dp',
@@ -61,19 +61,19 @@ COMPARISON_VARIABLES = [
 ]
 
 # ============================================================================
-# FUNÇÕES DE I/O E FILTRAGEM
+# I/O AND FILTERING FUNCTIONS
 # ============================================================================
 
 def load_and_filter_sar(sar_file, quality_flags=None):
     """
-    Carrega dados SAR e filtra por quality_flag
+    Load data SAR e filtra por quality_flag
     
     Parameters:
     -----------
     sar_file : Path
-        Caminho do arquivo SAR
+        Path of file SAR
     quality_flags : list, optional
-        Lista de quality flags aceitos (padrão: [0])
+        Lista of quality flags aceitos (standard: [0])
     
     Returns:
     --------
@@ -94,15 +94,15 @@ def load_and_filter_sar(sar_file, quality_flags=None):
 
 def load_ww3_files_dict(ww3_dir):
     """
-    Carrega todos os arquivos WW3 e cria dicionário indexado por reference_id
+    Load todos os files WW3 e cria dictionary indexado por reference_id
     
-    IMPORTANTE: Cada reference_id pode ter múltiplos timestamps simulados.
-    Armazenamos uma lista de DataFrames para fazer matching temporal posterior.
+    IMPORTANT: Each reference_id can have multiple simulated timestamps.
+    Armazenamos uma lista of DataFrames for fazer matching temporal posterior.
     
     Parameters:
     -----------
     ww3_dir : str or Path
-        Diretório contendo arquivos WW3
+        Directory contendo files WW3
     
     Returns:
     --------
@@ -116,7 +116,7 @@ def load_ww3_files_dict(ww3_dir):
         if 'reference_id' in df_ww3.columns and len(df_ww3) > 0:
             ref_id = df_ww3['reference_id'].iloc[0]
             
-            # Armazenar como lista para suportar múltiplos timestamps
+            # Store as list to support multiple timestamps
             if ref_id not in ww3_dict:
                 ww3_dict[ref_id] = []
             ww3_dict[ref_id].append(df_ww3)
@@ -125,27 +125,27 @@ def load_ww3_files_dict(ww3_dir):
 
 
 # ============================================================================
-# FUNÇÕES DE MATCHING DE PARTIÇÕES
+# PARTITION MATCHING FUNCTIONS
 # ============================================================================
 
-def validate_temporal_match(sar_time, ww3_time, max_diff_hours=MAX_TIME_DIFF_HOURS):
+def validatete_temporal_match(sar_time, ww3_time, max_diff_hours=MAX_TIME_DIFF_HOURS):
     """
-    Valida se o matching temporal entre SAR e WW3 é aceitável
+    Validate se o matching temporal between SAR e WW3 é acceptable
     
     Parameters:
     -----------
     sar_time : str or pd.Timestamp
-        Timestamp da observação SAR
+        Timestamp of the observation SAR
     ww3_time : str or pd.Timestamp
-        Timestamp da simulação WW3
+        Timestamp of the simulation WW3
     max_diff_hours : float
-        Diferença temporal máxima aceitável [horas]
+        Difference temporal maximum acceptable [hours]
     
     Returns:
     --------
     tuple: (is_valid, time_diff_hours)
-        is_valid: bool - True se diferença temporal é aceitável
-        time_diff_hours: float - Diferença temporal em horas
+        is_valid: bool - True se difference temporal é acceptable
+        time_diff_hours: float - Difference temporal in hours
     """
     sar_dt = pd.to_datetime(sar_time)
     ww3_dt = pd.to_datetime(ww3_time)
@@ -158,34 +158,34 @@ def validate_temporal_match(sar_time, ww3_time, max_diff_hours=MAX_TIME_DIFF_HOU
 
 def compute_angular_difference(angle1, angle2):
     """
-    Calcula diferença angular mínima considerando circularidade (0-360°)
+    Calculates difference angular minimum considering circularity (0-360°)
     
     Parameters:
     -----------
     angle1, angle2 : float
-        Ângulos em graus
+        Angles in degrees
     
     Returns:
     --------
-    float: Diferença angular mínima [0, 180]
+    float: Difference angular minimum [0, 180]
     """
     return abs((angle1 - angle2 + 180) % 360 - 180)
 
 
 def extract_partitions_from_row(row, prefix=''):
     """
-    Extrai dados de partições (Hs, Tp, Dp) de uma linha do DataFrame
+    Extracts data of partitions (Hs, Tp, Dp) of uma line of DataFrame
     
     Parameters:
     -----------
     row : pd.Series
-        Linha do DataFrame
+        Row of DataFrame
     prefix : str
-        Prefixo das colunas (vazio por padrão)
+        Prefixo of colunas (vazio por standard)
     
     Returns:
     --------
-    list: Lista de dicts com dados das partições
+    list: Lista of dicts with data of partitions
     """
     partitions = []
     
@@ -194,7 +194,7 @@ def extract_partitions_from_row(row, prefix=''):
         tp = row.get(f'{prefix}P{p}_Tp', np.nan)
         dp = row.get(f'{prefix}P{p}_Dp', np.nan)
         
-        # Adicionar apenas se Hs não for NaN (partição existe)
+        # Add only if Hs is not NaN (partition exists)
         if not np.isnan(hs):
             partitions.append({
                 'partition': p,
@@ -210,61 +210,61 @@ def find_best_match(sar_partitions, ww3_partitions, sar_pnum,
                     tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE, 
                     tp_min=TP_MIN_THRESHOLD):
     """
-    Encontra a melhor partição WW3 correspondente a uma partição SAR
-    baseado em proximidade de Tp e Dp.
+    Find a best partition WW3 correspondente a uma partition SAR
+    baseado in proximidade of Tp e Dp.
     
-    Nota: Partições com Tp < 10s são rejeitadas pois SAR não é confiável
-    para detecção de wind sea de alta frequência.
+    Note: Partitions with Tp < 10s are rejected since SAR not é reliable
+    for detection of wind sea of high frequency.
     
     Parameters:
     -----------
     sar_partitions : list
-        Lista de partições SAR
+        Lista of partitions SAR
     ww3_partitions : list
-        Lista de partições WW3
+        Lista of partitions WW3
     sar_pnum : int
-        Número da partição SAR (1, 2, ou 3)
+        Number of the partition SAR (1, 2, ou 3)
     tp_tol : float
-        Tolerância em Tp [s]
+        Tolerance in Tp [s]
     dp_tol : float
-        Tolerância em Dp [graus]
+        Tolerance in Dp [degrees]
     tp_min : float
-        Tp mínimo para considerar [s]
+        Tp minimum for considerar [s]
     
     Returns:
     --------
-    tuple: (sar_data, ww3_data) ou (sar_data, None) se não houver match
+    tuple: (sar_data, ww3_data) ou (sar_data, None) se not houver match
     """
-    # Encontrar partição SAR
+    # Findr partition SAR
     sar_data = next((p for p in sar_partitions if p['partition'] == sar_pnum), None)
     if not sar_data:
         return None, None
     
-    # Rejeitar partições SAR com Tp < tp_min (SAR não confiável para wind sea)
+    # Reject SAR partitions with Tp < tp_min (SAR unreliable for wind sea)
     if not np.isnan(sar_data['tp']) and sar_data['tp'] < tp_min:
         return sar_data, None
     
-    # Buscar melhor match WW3
+    # Buscar best match WW3
     best_ww3 = None
     min_score = None
     
     for ww3 in ww3_partitions:
-        # Pular se valores são NaN
+        # Skip if values are NaN
         if (np.isnan(ww3['tp']) or np.isnan(sar_data['tp']) or
             np.isnan(ww3['dp']) or np.isnan(sar_data['dp'])):
             continue
         
-        # Rejeitar partições WW3 com Tp < tp_min (não podem ser validadas com SAR)
+        # Reject WW3 partitions with Tp < tp_min (cannot be validateted with SAR)
         if ww3['tp'] < tp_min:
             continue
         
-        # Calcular diferenças
+        # Calculate differences
         tp_diff = abs(ww3['tp'] - sar_data['tp'])
         dp_diff = compute_angular_difference(ww3['dp'], sar_data['dp'])
         
-        # Aceitar apenas se ambas dentro da tolerância
+        # Accept only if both within tolerance
         if tp_diff <= tp_tol and dp_diff <= dp_tol:
-            # Score ponderado para desempate
+            # Score ponderado for desempate
             score = tp_diff + dp_diff / 40.0
             
             if min_score is None or score < min_score:
@@ -276,11 +276,11 @@ def find_best_match(sar_partitions, ww3_partitions, sar_pnum,
 
 def create_match_record(ref_id, sar_row, ww3_row, sar_match, ww3_match, time_diff_hours):
     """
-    Cria registro de partições pareadas
+    Create registro of partitions paired
     
     Returns:
     --------
-    dict: Registro com dados SAR, WW3 e diferenças
+    dict: Registro with data SAR, WW3 e differences
     """
     tp_diff = abs(sar_match['tp'] - ww3_match['tp'])
     dp_diff = compute_angular_difference(sar_match['dp'], ww3_match['dp'])
@@ -307,13 +307,13 @@ def create_match_record(ref_id, sar_row, ww3_row, sar_match, ww3_match, time_dif
 
 
 # ============================================================================
-# CRIAÇÃO DE ARQUIVOS DE PARTIÇÕES PAREADAS
+# CREATING PAIRED PARTITION FILES
 # ============================================================================
 
 def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE, 
                              quality_flags=None):
     """
-    Cria arquivos de partições pareadas (partition1.csv, partition2.csv, partition3.csv)
+    Create files of partitions paired (partition1.csv, partition2.csv, partition3.csv)
     
     Returns:
     --------
@@ -327,14 +327,14 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
     
     print(f"Found {len(sar_files)} SAR files and {len(ww3_dict)} WW3 files")
     
-    # Armazenamento para partições pareadas e estatísticas
+    # Storage for paired partitions and statistics
     partition_matches = {1: [], 2: [], 3: []}
     total_sar_files = 0
     temporal_match_valid = 0
     temporal_match_rejected = 0
     spatial_match_not_found = 0
     
-    # Processar cada arquivo SAR
+    # Process each file SAR
     for sar_file in sar_files:
         df_sar = load_and_filter_sar(sar_file, quality_flags=quality_flags)
         
@@ -343,20 +343,20 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
         
         total_sar_files += 1
         
-        # Obter reference_id do arquivo SAR
+        # Obter reference_id of file SAR
         if 'reference_id' not in df_sar.columns:
             continue
         
         ref_id = df_sar['reference_id'].iloc[0]
         
-        # Encontrar dados WW3 correspondentes (matching espacial)
+        # Findr data WW3 correspondentes (matching espacial)
         if ref_id not in ww3_dict:
             spatial_match_not_found += 1
             continue
         
-        ww3_list = ww3_dict[ref_id]  # Lista de DataFrames WW3 para este ref_id
+        ww3_list = ww3_dict[ref_id]  # Lista of DataFrames WW3 for este ref_id
         
-        # Extrair tempo SAR
+        # Extract time SAR
         if len(df_sar) == 0:
             continue
             
@@ -364,7 +364,7 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
         sar_time = sar_row.get('obs_time', '')
         sar_time_dt = pd.to_datetime(sar_time)
         
-        # Encontrar o WW3 temporalmente mais próximo
+        # Find closest WW3 temporally
         best_ww3 = None
         best_time_diff = float('inf')
         
@@ -381,7 +381,7 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
                 best_time_diff = time_diff
                 best_ww3 = (df_ww3, ww3_row, time_diff)
         
-        # Validar se o melhor match temporal é aceitável
+        # Validatete if best temporal match is acceptable
         if best_ww3 is None:
             spatial_match_not_found += 1
             continue
@@ -394,11 +394,11 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
         
         temporal_match_valid += 1
         
-        # Extrair partições
+        # Extract partitions
         sar_partitions = extract_partitions_from_row(sar_row)
         ww3_partitions = extract_partitions_from_row(ww3_row)
         
-        # Encontrar melhores matches para cada partição SAR
+        # Findr melhores matches for each partition SAR
         for sar_pnum in [1, 2, 3]:
             sar_match, ww3_match = find_best_match(
                 sar_partitions, ww3_partitions, sar_pnum,
@@ -411,14 +411,14 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
                 )
                 partition_matches[sar_pnum].append(match_record)
     
-    # Imprimir estatísticas de matching
+    # Print matching statistics
     print(f"\n{'='*70}")
     print(f" TEMPORAL MATCHING STATISTICS")
     print(f"{'='*70}")
     print(f"Total SAR files processed: {total_sar_files}")
     print(f"Spatial matches found (same reference_id): {temporal_match_valid + temporal_match_rejected}")
     print(f"Spatial matches NOT found: {spatial_match_not_found}")
-    print(f"\nTemporal validation (max diff = {MAX_TIME_DIFF_HOURS} hour):")
+    print(f"\nTemporal validatetion (max diff = {MAX_TIME_DIFF_HOURS} hour):")
     print(f"  ✓ Valid temporal matches: {temporal_match_valid}")
     print(f"  ✗ Rejected (time diff > {MAX_TIME_DIFF_HOURS}h): {temporal_match_rejected}")
     
@@ -427,14 +427,14 @@ def create_partition_matches(tp_tol=TP_TOLERANCE, dp_tol=DP_TOLERANCE,
         print(f"  Success rate: {valid_pct:.1f}%")
     print(f"{'='*70}")
     
-    # Salvar partições pareadas
+    # Save partitions paired
     save_partition_matches(partition_matches)
     
     return partition_matches
 
 
 def save_partition_matches(partition_matches):
-    """Salva partições pareadas em arquivos CSV e imprime resumo"""
+    """Save partitions paired in files CSV e print summary"""
     output_dir = Path(OUTPUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -455,23 +455,23 @@ def save_partition_matches(partition_matches):
 
 
 # ============================================================================
-# FUNÇÕES DE CÁLCULO DE MÉTRICAS
+# METRICS CALCULATION FUNCTIONS
 # ============================================================================
 
 def compute_metrics(obs, model):
     """
-    Calcula métricas de comparação entre observações e modelo
+    Calculates metrics of comparison between observations e model
     
     Parameters:
     -----------
     obs : array-like
         Valores observados (SAR)
     model : array-like
-        Valores do modelo (WW3)
+        Valores of model (WW3)
     
     Returns:
     --------
-    dict: Dicionário com métricas (nbias, nrmse, pearson_r, n_points)
+    dict: Dictionary with metrics (nbias, nrmse, pearson_r, n_points)
     """
     obs = np.array(obs)
     model = np.array(model)
@@ -492,7 +492,7 @@ def compute_metrics(obs, model):
     rmse = np.sqrt(np.mean((model - obs)**2))
     nrmse = rmse / np.mean(obs) if np.mean(obs) != 0 else np.nan
     
-    # Correlação de Pearson
+    # Pearson correlation
     if len(obs) > 1:
         pearson_r, _ = pearsonr(obs, model)
     else:
@@ -507,11 +507,11 @@ def compute_metrics(obs, model):
 
 
 # ============================================================================
-# FUNÇÕES DE PLOTAGEM
+# PLOTTING FUNCTIONS
 # ============================================================================
 
 def setup_plot_axis(ax, var, axis_limits):
-    """Configura limites e aparência dos eixos"""
+    """Configure limits e appearance dos axes"""
     axis_min, axis_max = axis_limits
     ax.set_xlim(axis_min, axis_max)
     ax.set_ylim(axis_min, axis_max)
@@ -520,17 +520,17 @@ def setup_plot_axis(ax, var, axis_limits):
     return axis_min, axis_max
 
 
-def plot_scatter_and_lines(ax, sar_clean, ww3_clean, axis_min, axis_max):
-    """Plota pontos de dispersão, linha 1:1 e regressão"""
+def plot_dispersion_and_lines(ax, sar_clean, ww3_clean, axis_min, axis_max):
+    """Plot points of dispersion, line 1:1 e regression"""
     # Scatter plot
-    ax.scatter(sar_clean, ww3_clean, alpha=0.6, s=100, 
+    ax.dispersion(sar_clean, ww3_clean, alpha=0.6, s=100, 
               edgecolors='black', linewidth=0.5)
     
-    # Linha 1:1
+    # Row 1:1
     ax.plot([axis_min, axis_max], [axis_min, axis_max], 
            'r--', linewidth=2, label='1:1 line')
     
-    # Linha de regressão
+    # Row of regression
     if len(sar_clean) > 1:
         z = np.polyfit(sar_clean, ww3_clean, 1)
         p = np.poly1d(z)
@@ -540,8 +540,8 @@ def plot_scatter_and_lines(ax, sar_clean, ww3_clean, axis_min, axis_max):
 
 
 def add_metrics_textbox(ax, sar_clean, ww3_clean):
-    """Adiciona caixa de texto com métricas ao gráfico"""
-    # Calcular métricas
+    """Add text box with metrics to plot"""
+    # Calculate metrics
     bias = np.mean(ww3_clean - sar_clean)
     nbias = bias / np.mean(sar_clean) if np.mean(sar_clean) != 0 else np.nan
     rmse = np.sqrt(np.mean((ww3_clean - sar_clean)**2))
@@ -552,7 +552,7 @@ def add_metrics_textbox(ax, sar_clean, ww3_clean):
     else:
         pearson_r = np.nan
     
-    # Criar texto com métricas
+    # Create texto with metrics
     metrics_text = (
         f'n = {len(sar_clean)}\n'
         f'Bias = {bias:.3f}\n'
@@ -562,7 +562,7 @@ def add_metrics_textbox(ax, sar_clean, ww3_clean):
         f'R = {pearson_r:.3f}'
     )
     
-    # Posicionar caixa de texto
+    # Posicionar text box
     y_pos = 0.05 if np.mean(ww3_clean) > np.mean(sar_clean) else 0.95
     va = 'bottom' if y_pos == 0.05 else 'top'
     
@@ -575,7 +575,7 @@ def add_metrics_textbox(ax, sar_clean, ww3_clean):
 
 
 def plot_single_variable(ax, df, var, var_label):
-    """Plota comparação para uma única variável"""
+    """Plot comparison for uma single variable"""
     sar_col = f'sar_{var}'
     ww3_col = f'ww3_{var}'
     
@@ -593,28 +593,28 @@ def plot_single_variable(ax, df, var, var_label):
         ax.set_title(var_label)
         return
     
-    # Obter limites dos eixos
+    # Obter limits dos axes
     axis_limits = PLOT_LIMITS.get(var, (0, max(sar_clean.max(), ww3_clean.max())))
     axis_min, axis_max = setup_plot_axis(ax, var, axis_limits)
     
-    # Plotar dados e linhas
-    plot_scatter_and_lines(ax, sar_clean, ww3_clean, axis_min, axis_max)
+    # Plotar data e linhas
+    plot_dispersion_and_lines(ax, sar_clean, ww3_clean, axis_min, axis_max)
     
-    # Adicionar labels e legenda
+    # Add labels e legenda
     ax.set_xlabel(f'SAR {var}', fontsize=12, fontweight='bold')
     ax.set_ylabel(f'WW3 {var}', fontsize=12, fontweight='bold')
     ax.set_title(var_label, fontsize=13, fontweight='bold')
     ax.legend(loc='upper left', fontsize=9)
     
-    # Adicionar métricas
+    # Add metrics
     add_metrics_textbox(ax, sar_clean, ww3_clean)
 
 
 def plot_partition_comparisons():
-    """Cria scatter plots para cada partição comparando SAR vs WW3"""
+    """Create dispersion plots for each partition comparing SAR vs WW3"""
     output_dir = Path(OUTPUT_DIR)
     
-    # Variáveis para plotar
+    # Variables to plot
     variables = [
         ('Hs', 'Significant Wave Height (m)'),
         ('Tp', 'Peak Period (s)'),
@@ -631,46 +631,46 @@ def plot_partition_comparisons():
         df = pd.read_csv(partition_file)
         
         if len(df) == 0:
-            print(f"Partition {pnum} has no data, skipping...")
+            print(f"Partition {pnum} has in the data, skipping...")
             continue
         
-        # Criar figura com 3 subplots
+        # Create figura with 3 subplots
         fig, axes = plt.subplots(1, 3, figsize=(18, 5))
         fig.suptitle(f'Partition {pnum} - SAR vs WW3 Comparison (n={len(df)})',
                      fontsize=16, fontweight='bold')
         
-        # Plotar cada variável
+        # Plotar each variable
         for idx, (var, var_label) in enumerate(variables):
             plot_single_variable(axes[idx], df, var, var_label)
         
         plt.tight_layout()
         
-        # Salvar figura
-        output_file = output_dir / f'partition{pnum}_scatter.png'
+        # Save figura
+        output_file = output_dir / f'partition{pnum}_dispersion.png'
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         print(f"Saved: {output_file}")
         plt.close()
     
-    print("\nAll scatter plots created successfully!")
+    print("\nAll dispersion plots created successfully!")
 
 
 # ============================================================================
-# EXECUÇÃO PRINCIPAL
+# MAIN EXECUTION
 # ============================================================================
 
 def main(create_files=True, create_plots=True):
     """
-    Função principal de execução
+    Main execution function
     
     Parameters:
     -----------
     create_files : bool
-        Se True, cria arquivos de partições pareadas (partition*.csv)
+        Se True, cria files of partitions paired (partition*.csv)
     create_plots : bool
-        Se True, cria scatter plots
+        Se True, cria dispersion plots
     """
     if create_files:
-        # Criar arquivos de partições pareadas
+        # Create files of partitions paired
         print("="*80)
         print("CREATING MATCHED PARTITION FILES")
         print("="*80)
@@ -680,24 +680,24 @@ def main(create_files=True, create_plots=True):
         )
     
     if create_plots:
-        # Criar scatter plots
+        # Create dispersion plots
         print("\n" + "="*80)
         print("CREATING SCATTER PLOTS")
         print("="*80)
         plot_partition_comparisons()
     
     print("\n" + "="*80)
-    print("✓ Validation complete!")
+    print("✓ Validatetion complete!")
     print("="*80)
 
 
 if __name__ == '__main__':
     # ========================================================================
-    # OPÇÕES DE EXECUÇÃO
+    # EXECUTION OPTIONS
     # ========================================================================
     
-    RUN_CREATE_FILES = True   # Criar arquivos partition*.csv (matching SAR/WW3)
-    RUN_CREATE_PLOTS = True   # Criar scatter plots
+    RUN_CREATE_FILES = True   # Create files partition*.csv (matching SAR/WW3)
+    RUN_CREATE_PLOTS = True   # Create dispersion plots
     
     # ========================================================================
     
@@ -706,7 +706,7 @@ if __name__ == '__main__':
     print("="*80)
     print(f"Case: {case}")
     print(f"Create partition files: {RUN_CREATE_FILES}")
-    print(f"Create scatter plots:   {RUN_CREATE_PLOTS}")
+    print(f"Create dispersion plots:   {RUN_CREATE_PLOTS}")
     print(f"Quality flags: {QUALITY_FLAG_OPTIONS}")
     print(f"Tp tolerance: {TP_TOLERANCE} s")
     print(f"Dp tolerance: {DP_TOLERANCE}°")

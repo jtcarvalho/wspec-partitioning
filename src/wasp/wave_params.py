@@ -1,5 +1,5 @@
 """
-Funções para cálculo de parâmetros de onda (Hs, Tp, Dp) a partir de espectros 2D
+Functions for calculating wave parameters (Hs, Tp, Dp) from 2D spectra
 """
 
 import numpy as np
@@ -7,64 +7,64 @@ import numpy as np
 
 def calculate_wave_parameters(E2d, freq, dirs_rad):
     """
-    Calcula Hs, Tp, Dp e outros parâmetros do espectro usando integração trapezoidal.
+    Calculate Hs, Tp, Dp and other spectral parameters using trapezoidal integration.
     
     Parameters:
     -----------
     E2d : ndarray (NF, ND)
-        Espectro direcional 2D [m²·s·rad⁻¹]
+        Spectrum directional 2D [m²·s·rad⁻¹]
     freq : ndarray (NF,)
-        Frequências [Hz]
+        Frequencies [Hz]
     dirs_rad : ndarray (ND,)
-        Direções [radianos]
+        Directions [radians]
     
     Returns:
     --------
     hs : float
-        Altura significativa [m]
+        Height significant [m]
     tp : float
-        Período de pico [s]
+        Period of peak [s]
     dp : float
-        Direção de pico [graus]
+        Direction of peak [degrees]
     m0 : float
-        Momento espectral de ordem 0 [m²]
+        Momento espectral of order 0 [m²]
     delf : ndarray (NF,)
-        Incrementos de frequência [Hz]
+        Incrementos of frequency [Hz]
     ddir : float
-        Incremento direcional [rad]
+        Incremento directional [rad]
     i_peak : int
-        Índice da frequência de pico
+        Index of the frequency of peak
     j_peak : int
-        Índice da direção de pico
+        Index of the direction of peak
     """
-    # Limpar dados inválidos
+    # Clean data invalid
     E2d_clean = np.where(np.isfinite(E2d) & (E2d >= 0), E2d, 0)
     
-    # Calcular incremento direcional
+    # Calculate increment directional
     ddir = 2 * np.pi / len(dirs_rad)
     
-    # Calcular incrementos de frequência
+    # Calculate incrementos of frequency
     delf = np.zeros_like(freq)
     for i in range(len(freq)-1):
         delf[i] = freq[i+1] - freq[i]
     delf[-1] = delf[-2]
     
-    # Calcular momento espectral m0 usando integração trapezoidal
+    # Calculate moment espectral m0 using integration trapezoidal
     m0 = 0
     for j in range(len(dirs_rad)):
         m0 += np.trapezoid(E2d_clean[:, j], freq) * ddir
     
-    # Calcular espectro 1D para encontrar pico
+    # Calculate spectrum 1D for find peak
     spec1d = np.sum(E2d_clean, axis=1) * ddir
     
-    # Altura significativa
+    # Height significant
     hs = 4 * np.sqrt(m0) if m0 > 0 else 0.0
     
-    # Período de pico
+    # Peak period
     i_peak = np.argmax(spec1d) if np.max(spec1d) > 0 else 0
     tp = 1.0 / freq[i_peak] if i_peak < len(freq) and freq[i_peak] > 0 else np.nan
     
-    # Direção de pico (média ponderada pela energia)
+    # Direction of peak (mean weighted by energy)
     j_peak = np.argmax(E2d[i_peak, :]) if i_peak < len(freq) else 0
     
     if np.any(E2d[i_peak, :] > 0):
@@ -78,21 +78,21 @@ def calculate_wave_parameters(E2d, freq, dirs_rad):
 
 def spectrum1d_from_2d(E2d, dirs_rad):
     """
-    Integra espectro 2D para obter espectro 1D E(f).
+    Integrates spectrum 2D for obtain spectrum 1D E(f).
     
     Parameters:
     -----------
     E2d : ndarray (NF, ND)
-        Espectro direcional 2D
+        Spectrum directional 2D
     dirs_rad : ndarray (ND,)
-        Direções [radianos]
+        Directions [radians]
     
     Returns:
     --------
     spec1d : ndarray (NF,)
-        Espectro 1D integrado
+        Spectrum 1D integrated
     ddir : float
-        Incremento direcional usado na integração
+        Incremento directional used in the integration
     """
     E2d_clean = np.where(np.isfinite(E2d) & (E2d >= 0), E2d, 0)
     ddir = 2 * np.pi / len(dirs_rad)
@@ -102,49 +102,49 @@ def spectrum1d_from_2d(E2d, dirs_rad):
 
 def convert_meteorological_to_oceanographic(met_dir):
     """
-    Converte direção meteorológica (de onde vem) para oceanográfica (para onde vai).
+    Converts direction meteorological (coming from) for oceanographic (going to).
     
     Parameters:
     -----------
     met_dir : float or ndarray
-        Direção meteorológica em graus (de onde o vento/onda vem)
+        Direction meteorological in degrees (of where o vento/wave vem)
         
     Returns:
     --------
     float or ndarray
-        Direção oceanográfica em graus (para onde a onda vai)
+        Direction oceanographic in degrees (for where a wave vai)
     """
     return (met_dir + 180) % 360
 
 
 def convert_spectrum_units(E2d, freq, dirs, from_unit, to_unit):
     """
-    Converte espectro entre diferentes unidades de energia.
+    Converts spectrum between diferentes unidades of energy.
     
     Parameters:
     -----------
     E2d : ndarray
-        Espectro 2D
+        Spectrum 2D
     freq : ndarray
-        Frequências
+        Frequencies
     dirs : ndarray
-        Direções
+        Directions
     from_unit : str
-        Unidade de origem: 'm2_s_rad', 'm2_Hz_rad', 'm2_Hz_deg'
+        Unidade of origem: 'm2_s_rad', 'm2_Hz_rad', 'm2_Hz_deg'
     to_unit : str
-        Unidade de destino: 'm2_s_rad', 'm2_Hz_rad', 'm2_Hz_deg'
+        Unidade of destino: 'm2_s_rad', 'm2_Hz_rad', 'm2_Hz_deg'
     
     Returns:
     --------
     ndarray
-        Espectro convertido
+        Spectrum convertido
     """
     if from_unit == to_unit:
         return E2d.copy()
     
     result = E2d.copy()
     
-    # Conversões entre unidades
+    # Conversions between units
     if from_unit == "m2_s_rad" and to_unit == "m2_Hz_rad":
         result = result / (2 * np.pi)
     elif from_unit == "m2_Hz_rad" and to_unit == "m2_s_rad":

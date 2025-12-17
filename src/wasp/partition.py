@@ -143,13 +143,13 @@ def generate_mask(ICOD, MASK, NF, ND):
     Phase 2 (Fill remaining zeros):
         - For any remaining unassigned points (value = 0)
         - Use 8-neighbor voting to assign most common neighbor label
-        - Iterate until no zeros remain or no changes occur
-        - Assign default value (1) if no neighbors are labeled
+        - Iterate until in the zeros remain or in the changes occur
+        - Assign default value (1) if in the neighbors are labeled
     
     Notes
     -----
     - Direction dimension is treated as periodic (wraps around at 0/360°)
-    - Frequency dimension has hard boundaries (no wrapping)
+    - Frequency dimension has hard boundaries (in the wrapping)
     - Multiple passes ensure all points are assigned even in complex spectra
     """
     mask_copy = MASK.copy()
@@ -197,7 +197,7 @@ def generate_mask(ICOD, MASK, NF, ND):
                         zero_changed = True
         
         if not zero_changed:
-            # If no zeros were changed, assign default value
+            # If in the zeros were changed, assign default value
             for i in range(NF):
                 for j in range(ND):
                     if mask_copy[i, j] == 0:
@@ -239,7 +239,7 @@ def calculate_peak_distances(peaks, frequencies, directions_rad, nmask):
     
     Notes
     -----
-    - Returns squared distances (no square root) for computational efficiency
+    - Returns squared distances (in the square root) for computational efficiency
     - Distance matrix is symmetric with zeros on diagonal
     - Used in merge_overlapping_systems to identify peaks that should be combined
     """
@@ -480,7 +480,7 @@ def calculate_partitioned_energy(E, M, delf, ddir, NF, ND, nmask):
             mask_idx = M[i, j]
             e[mask_idx] += E[i, j] * delf[i] * ddir
 
-    # Debug: soma das energias das partições
+    # Debug: sum of energies of partitions
     print(f"[DEBUG] Sum of partition energies: {np.sum(e):.6f}")
     print(f"[DEBUG] Expected total: {np.sum(E * np.tile(delf[:, np.newaxis], (1, ND)) * ddir):.6f}")
     
@@ -529,7 +529,7 @@ def renumber_partitions_by_energy(mask, Hs, e=None):
         else:
             return mask.copy(), Hs.copy()
     
-    # Obter energias para cada partição
+    # Obter energies for each partition
     partition_energies = [(p, Hs[p]) for p in unique_partitions]
     sorted_partitions = sorted(partition_energies, key=lambda x: x[1], reverse=True)
     
@@ -592,10 +592,10 @@ def calculate_peak_parameters(E, mask, frequencies, directions_rad, NF, ND, nmas
     -------
     Tp : ndarray (nmask+2,)
         Peak period for each partition in seconds
-        NaN for partitions with no energy
+        NaN for partitions with in the energy
     Dp : ndarray (nmask+2,)
         Peak direction for each partition in degrees (0-360°)
-        NaN for partitions with no energy
+        NaN for partitions with in the energy
     
     Algorithm
     ---------
@@ -748,7 +748,7 @@ def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_par
     Returns
     -------
     results : dict or None
-        Dictionary containing partitioning results, or None if no peaks found.
+        Dictionary containing partitioning results, or None if in the peaks found.
         Keys:
             'mask' : ndarray (NF, ND)
                 Partition mask with labels 1 to nmask
@@ -785,7 +785,7 @@ def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_par
     -----
     - Energy conservation is checked and reported
     - Partitions are numbered by energy: 1 = most energetic system
-    - Returns None if no spectral peaks are identified
+    - Returns None if in the spectral peaks are identified
     
     Examples
     --------
@@ -975,7 +975,7 @@ def plot_directional_spectrum(E2d, freq, dirs, selected_time, hs, tp, dp):
     tick_interval = (vmax - vmin) / 5
     cbar.set_ticks(np.arange(vmin, vmax + 0.5 * tick_interval, tick_interval))
 
-    # Ajuste manual ao invés de tight_layout
+    # Manual adjustment instead of tight_layout
     fig.subplots_adjust(left=0.06, right=0.86, top=0.9, bottom=0.05)
 
     plt.show()

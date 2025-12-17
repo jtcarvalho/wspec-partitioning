@@ -30,33 +30,33 @@ from wasp.partition import partition_spectrum
 # case = 'freddy'
 case = 'all'
 
-# Diretórios
+# Directories
 OUTPUT_DIR = f'../data/{case}/partition'
 SAR_DATA_PATH = f'/Users/jtakeo/data/sentinel1ab/{case}'
 CSV_PATH = f'../auxdata/sar_matches_{case}_track.csv'
 
-# Parâmetros do particionamento
-MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% da energia total
+# Partitioning parameters
+MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total
 PEAK_DETECTION_SENSITIVITY = 0.5
 MAX_PARTITIONS = 5
 
-# Nome do grupo NetCDF (estrutura CMEMS)
+# NetCDF group name (CMEMS structure)
 GROUP_NAME = "obs_params"
 
 # ============================================================================
-# FUNÇÕES AUXILIARES
+# HELPER FUNCTIONS
 # ============================================================================
 
 def calculate_corrected_total_hs(results, min_energy_threshold):
     """
-    Calcula Hs total corrigido a partir da soma das energias das partições
+    Calculates Hs total corrected a from of the sum of energies of partitions
     
     Returns:
     --------
     energy_sum : float
-        Soma das energias das partições [m²]
+        Sum of energies of partitions [m²]
     Hs : float
-        Altura significativa total [m]
+        Height significant total [m]
     """
     energy_sum = sum(results['energy'][i] for i in range(len(results['energy'])) 
                      if i == 0 or results['energy'][i] > min_energy_threshold)
@@ -65,40 +65,40 @@ def calculate_corrected_total_hs(results, min_energy_threshold):
 
 
 def count_significant_partitions(results, min_energy_threshold):
-    """Conta partições com energia acima do threshold"""
+    """Count partitions with energy above of threshold"""
     return sum(1 for i in range(1, len(results['Hs'])) 
                if results['energy'][i] > min_energy_threshold)
 
 
 # ============================================================================
-# FUNÇÕES DE I/O
+# I/O FUNCTIONS
 # ============================================================================
 
 def load_sar_data(file_path, index):
     """
-    Carrega dataset SAR e extrai espectro
+    Load dataset SAR e extracts spectrum
     
     Parameters:
     -----------
     file_path : str
-        Caminho do arquivo NetCDF SAR
+        Path of file NetCDF SAR
     index : int
-        Índice da observação a carregar
+        Index of the observation a load
     
     Returns:
     --------
     ds : xarray.Dataset
-        Dataset SAR aberto
+        Dataset SAR opened
     E2d : ndarray
-        Espectro 2D [m²·s·rad⁻¹]
+        Spectrum 2D [m²·s·rad⁻¹]
     freq : ndarray
-        Frequências [Hz]
+        Frequencies [Hz]
     dirs : ndarray
-        Direções [graus]
+        Directions [degrees]
     dirs_rad : ndarray
-        Direções [radianos]
+        Directions [radians]
     selected_time : pd.Timestamp
-        Timestamp da observação
+        Timestamp of the observation
     """
     ds = xr.open_dataset(file_path, group=GROUP_NAME)
     E2d, freq, dirs, dirs_rad, selected_time = load_sar_spectrum(
@@ -109,21 +109,21 @@ def load_sar_data(file_path, index):
 
 def extract_sar_metadata(ds, index):
     """
-    Extrai metadados do dataset SAR
+    Extracts metadata of dataset SAR
     
     Parameters:
     -----------
     ds : xarray.Dataset
         Dataset SAR
     index : int
-        Índice da observação
+        Index of the observation
     
     Returns:
     --------
     quality_flag : int
-        Flag de qualidade (0 = melhor)
+        Flag of quality (0 = best)
     actual_time : pd.Timestamp
-        Timestamp da observação
+        Timestamp of the observation
     lon : float
         Longitude
     lat : float
@@ -143,11 +143,11 @@ def extract_sar_metadata(ds, index):
 def create_partition_data_dict(ref, index, quality_flag, date_time, lon, lat, 
                                 file_path, energy_sum, Hs, results, min_energy_threshold):
     """
-    Cria dicionário com resultados do particionamento
+    Create dictionary with results of partitioning
     
     Returns:
     --------
-    dict: Dicionário pronto para conversão em DataFrame
+    dict: Dictionary ready for conversion in DataFrame
     """
     moments = results['moments']
     
@@ -160,7 +160,7 @@ def create_partition_data_dict(ref, index, quality_flag, date_time, lon, lat,
         'latitude': float(lat),
         'source_file': os.path.basename(file_path),
         
-        # Espectro total
+        # Spectrum total
         'total_energy': energy_sum,
         'total_Hs': Hs,
         'total_Tp': results['total_Tp'],
@@ -170,7 +170,7 @@ def create_partition_data_dict(ref, index, quality_flag, date_time, lon, lat,
         'total_m2': moments['total'][2],
     }
     
-    # Adicionar dados das partições (até 3 partições)
+    # Add partition data (up to 3 partitions)
     for p in range(1, 4):
         if p < len(results['Hs']) and results['energy'][p] > min_energy_threshold:
             data.update({
@@ -183,7 +183,7 @@ def create_partition_data_dict(ref, index, quality_flag, date_time, lon, lat,
                 f'P{p}_m2': moments['m2'][p],
             })
         else:
-            # Preencher com zeros se partição não existe
+            # Fill with zeros if partition doesn't exist
             data.update({
                 f'P{p}_energy': 0.0, 
                 f'P{p}_Hs': 0.0, 
@@ -199,7 +199,7 @@ def create_partition_data_dict(ref, index, quality_flag, date_time, lon, lat,
 
 def save_partition_results(ref, index, date_time, data, output_dir):
     """
-    Salva resultados do particionamento em arquivo CSV
+    Save results of partitioning in file CSV
     
     Returns:
     --------
@@ -217,11 +217,11 @@ def save_partition_results(ref, index, date_time, data, output_dir):
 
 
 # ============================================================================
-# FUNÇÕES DE IMPRESSÃO
+# PRINTING FUNCTIONS
 # ============================================================================
 
 def print_case_header(idx, total_cases, ref, index, file_name):
-    """Imprime cabeçalho do caso sendo processado"""
+    """Print header of case being processed"""
     print(f"\n{'='*60}")
     print(f"Processing case {idx + 1}/{total_cases}")
     print(f"{'='*60}")
@@ -230,14 +230,14 @@ def print_case_header(idx, total_cases, ref, index, file_name):
 
 
 def print_location_info(lon, lat, quality_flag, hs, tp, dp):
-    """Imprime informações de localização e parâmetros integrados"""
+    """Print location information and integrated parameters"""
     print(f"Location: ({lon:.2f}°E, {lat:.2f}°N)")
     print(f"Quality flag: {quality_flag}")
     print(f"Integrated spectrum: Hs={hs:.2f}m, Tp={tp:.2f}s, Dp={dp:.0f}°")
 
 
 def print_partitioning_summary(n_peaks_initial, n_partitions_final):
-    """Imprime resumo do processo de particionamento"""
+    """Print summary of process of partitioning"""
     print("\n" + "="*70)
     print(" SPECTRAL PARTITIONING - PROCESS SUMMARY")
     print("="*70)
@@ -247,7 +247,7 @@ def print_partitioning_summary(n_peaks_initial, n_partitions_final):
 
 
 def print_partitioning_results(results, min_energy_threshold):
-    """Imprime resultados detalhados do particionamento"""
+    """Print results detailed of partitioning"""
     n_partitions = count_significant_partitions(results, min_energy_threshold)
     
     print("\n" + "="*70)
@@ -256,7 +256,7 @@ def print_partitioning_results(results, min_energy_threshold):
     print(f"Number of partitions found: {n_partitions}")
     print("─"*70)
     
-    # Mostrar cada partição
+    # Show each partition
     partition_count = 0
     for i in range(1, len(results['Hs'])):
         if results['energy'][i] > min_energy_threshold:
@@ -270,7 +270,7 @@ def print_partitioning_results(results, min_energy_threshold):
             print(f"  Energy: {results['energy'][i]:.4f} m²")
             print(f"  Energy fraction: {energy_fraction:.1f}%")
     
-    # Mostrar total integrado
+    # Show integrated total
     print("\n" + "─"*70)
     print(f"Integrated total:")
     print(f"  Hs = {results['total_Hs']:.2f} m")
@@ -280,7 +280,7 @@ def print_partitioning_results(results, min_energy_threshold):
 
 
 def print_save_confirmation(output_path, energy_sum, Hs):
-    """Imprime confirmação de salvamento"""
+    """Print confirmation of saving"""
     print(f"\n✓ Results saved to: {output_path}")
     print(f"✓ Corrected total: energy={energy_sum:.6f}m², Hs={Hs:.3f}m")
 
@@ -291,39 +291,39 @@ def print_save_confirmation(output_path, energy_sum, Hs):
 
 def process_single_case(row, idx, total_cases, output_dir):
     """
-    Processa um único caso SAR
+    Process a single case SAR
     
     Parameters:
     -----------
     row : pandas.Series
-        Linha do CSV com informações do caso
+        Row of CSV with information of case
     idx : int
-        Índice do caso atual
+        Index of case current
     total_cases : int
-        Número total de casos a processar
+        Number total of cases a process
     output_dir : str
-        Diretório de saída para resultados
+        Directory of output for results
     """
-    # Extrair parâmetros
+    # Extract parameters
     file_path = os.path.join(SAR_DATA_PATH, row['filename'])
     index = int(row['obs_index'])
     date_time = row['time']
     ref = int(row['ref'])
     
-    # Imprimir cabeçalho
+    # Print header
     print_case_header(idx, total_cases, ref, index, os.path.basename(file_path))
     
-    # Carregar dados
+    # Load data
     ds, E2d, freq, dirs, dirs_rad, selected_time = load_sar_data(file_path, index)
     
-    # Calcular parâmetros integrados
+    # Calculate integrated parameters
     hs, tp, dp, m0, _, _, _, _ = calculate_wave_parameters(E2d, freq, dirs_rad)
     quality_flag, actual_time, lon, lat = extract_sar_metadata(ds, index)
     
-    # Imprimir informações
+    # Print information
     print_location_info(lon, lat, quality_flag, hs, tp, dp)
     
-    # Aplicar particionamento
+    # Apply partitioning
     results = partition_spectrum(
         E2d, freq, dirs_rad, PEAK_DETECTION_SENSITIVITY, MAX_PARTITIONS
     )
@@ -333,42 +333,42 @@ def process_single_case(row, idx, total_cases, output_dir):
         ds.close()
         return
     
-    # Calcular threshold e contar partições
+    # Calculate threshold and count partitions
     min_energy_threshold = MIN_ENERGY_THRESHOLD_FRACTION * results['total_m0']
     n_peaks_initial = len(results['peaks'])
     n_partitions_final = count_significant_partitions(results, min_energy_threshold)
     
-    # Imprimir resultados
+    # Print results
     print_partitioning_summary(n_peaks_initial, n_partitions_final)
     print_partitioning_results(results, min_energy_threshold)
     
-    # Calcular Hs corrigido
+    # Calculate corrected Hs
     energy_sum, Hs = calculate_corrected_total_hs(results, min_energy_threshold)
     
-    # Criar e salvar resultados
+    # Create and save results
     data = create_partition_data_dict(
         ref, index, quality_flag, date_time, lon, lat,
         file_path, energy_sum, Hs, results, min_energy_threshold
     )
     output_path, _ = save_partition_results(ref, index, date_time, data, output_dir)
     
-    # Imprimir confirmação
+    # Print confirmation
     print_save_confirmation(output_path, energy_sum, Hs)
     
-    # Fechar dataset
+    # Close dataset
     ds.close()
 
 
 # ============================================================================
-# EXECUÇÃO PRINCIPAL
+# MAIN EXECUTION
 # ============================================================================
 
 def main():
-    """Função principal de execução"""
+    """Main execution function"""
     # Setup
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    # Carregar casos
+    # Load cases
     df = pd.read_csv(CSV_PATH)
     total_cases = len(df)
     
@@ -379,7 +379,7 @@ def main():
     print(f"Total cases to process: {total_cases}")
     print(f"Output directory: {OUTPUT_DIR}")
     
-    # Processar cada caso
+    # Process each case
     for idx, row in df.iterrows():
         try:
             process_single_case(row, idx, total_cases, OUTPUT_DIR)

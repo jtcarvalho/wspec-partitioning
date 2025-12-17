@@ -30,8 +30,8 @@ Example usage:
         print(f"Partition {i+1}: Hs={params['Hs']:.2f}m, Tp={params['Tp']:.1f}s")
 """
 
-__version__ = "0.1.0"
-__author__ = "Your Name"
+__version__ = "0.1.1"
+__author__ = "JT Carvalho"
 
 # Import main functions for easy access
 from .partition import partition_spectrum

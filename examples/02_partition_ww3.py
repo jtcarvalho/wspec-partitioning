@@ -30,21 +30,21 @@ from wasp.partition import partition_spectrum
 # case = 'surigae'
 case = 'all'
 
-# Diretórios
+# Directories
 OUTPUT_DIR = f'../data/{case}/partition'
 CSV_PATH = f'../auxdata/sar_matches_{case}_track.csv'
 WW3_DATA_PATH = f'/Users/jtakeo/data/ww3/{case}'
 
-# Parâmetros do particionamento
-MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% da energia total
+# Partitioning parameters
+MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total
 PEAK_DETECTION_SENSITIVITY = 0.5
 
 # ============================================================================
-# FUNÇÕES AUXILIARES
+# HELPER FUNCTIONS
 # ============================================================================
 
 def count_significant_partitions(results, min_energy_threshold):
-    """Conta partições com energia acima do threshold"""
+    """Count partitions with energy above of threshold"""
     count = 0
     for i in range(1, len(results['Hs'])):
         if results['energy'][i] > min_energy_threshold:
@@ -53,11 +53,11 @@ def count_significant_partitions(results, min_energy_threshold):
 
 
 # ============================================================================
-# FUNÇÕES DE IMPRESSÃO
+# PRINTING FUNCTIONS
 # ============================================================================
 
 def print_case_header(idx, total_cases, ref, target_time_dt):
-    """Imprime cabeçalho do caso sendo processado"""
+    """Print header of case being processed"""
     print(f"\n{'='*60}")
     print(f"Processing case {idx + 1}/{total_cases}")
     print(f"{'='*60}")
@@ -66,14 +66,14 @@ def print_case_header(idx, total_cases, ref, target_time_dt):
 
 
 def print_time_match_info(closest_time, itime, time_diff_hours):
-    """Imprime informações de matching temporal"""
+    """Print information of matching temporal"""
     print(f"Closest WW3 time: {closest_time}")
     print(f"Time index (itime): {itime}")
     print(f"Time difference: {time_diff_hours:.2f} hours")
 
 
 def print_partitioning_summary(n_peaks_initial, n_partitions_final):
-    """Imprime resumo do processo de particionamento"""
+    """Print summary of process of partitioning"""
     print("\n" + "="*70)
     print(" SPECTRAL PARTITIONING - PROCESS SUMMARY")
     print("="*70)
@@ -83,7 +83,7 @@ def print_partitioning_summary(n_peaks_initial, n_partitions_final):
 
 
 def print_partitioning_results(results, min_energy_threshold):
-    """Imprime resultados detalhados do particionamento"""
+    """Print results detailed of partitioning"""
     n_partitions = count_significant_partitions(results, min_energy_threshold)
     
     print("\n" + "="*70)
@@ -92,7 +92,7 @@ def print_partitioning_results(results, min_energy_threshold):
     print(f"Number of partitions found: {n_partitions}")
     print("─"*70)
     
-    # Mostrar cada partição
+    # Show each partition
     partition_count = 0
     for i in range(1, len(results['Hs'])):
         if results['energy'][i] > min_energy_threshold:
@@ -106,7 +106,7 @@ def print_partitioning_results(results, min_energy_threshold):
             print(f"  Energy: {results['energy'][i]:.4f} m²")
             print(f"  Energy fraction: {energy_fraction:.1f}%")
     
-    # Mostrar total integrado
+    # Show integrated total
     print("\n" + "─"*70)
     print(f"Integrated total:")
     print(f"  Hs = {results['total_Hs']:.2f} m")
@@ -116,7 +116,7 @@ def print_partitioning_results(results, min_energy_threshold):
 
 
 def print_save_confirmation(output_path, df_results):
-    """Imprime confirmação de salvamento"""
+    """Print confirmation of saving"""
     print(f"\n✓ Results saved to: {output_path}")
     print(f"\nColumns in CSV: {list(df_results.columns)}")
     print(f"\nPreview:")
@@ -130,11 +130,11 @@ def print_save_confirmation(output_path, df_results):
 def create_partition_data_dict(ref, selected_time, lon, lat, file_path, 
                                 results, min_energy_threshold):
     """
-    Cria dicionário com resultados do particionamento
+    Create dictionary with results of partitioning
     
     Returns:
     --------
-    dict: Dicionário pronto para conversão em DataFrame
+    dict: Dictionary ready for conversion in DataFrame
     """
     moments = results['moments']
     m0_total = moments['total'][0]
@@ -148,7 +148,7 @@ def create_partition_data_dict(ref, selected_time, lon, lat, file_path,
         'latitude': float(lat),
         'source_file': os.path.basename(file_path),
         
-        # Espectro total
+        # Spectrum total
         'total_energy': results['total_m0'],
         'total_Hs': results['total_Hs'],
         'total_Tp': results['total_Tp'],
@@ -158,7 +158,7 @@ def create_partition_data_dict(ref, selected_time, lon, lat, file_path,
         'total_m2': m2_total,
     }
     
-    # Adicionar dados das partições (até 3 partições)
+    # Add partition data (up to 3 partitions)
     for p in range(1, 4):
         if p < len(results['Hs']) and results['energy'][p] > min_energy_threshold:
             data[f'P{p}_energy'] = results['energy'][p]
@@ -169,7 +169,7 @@ def create_partition_data_dict(ref, selected_time, lon, lat, file_path,
             data[f'P{p}_m1'] = moments['m1'][p]
             data[f'P{p}_m2'] = moments['m2'][p]
         else:
-            # Preencher com zeros se partição não existe
+            # Fill with zeros if partition doesn't exist
             data[f'P{p}_energy'] = 0.0
             data[f'P{p}_Hs'] = 0.0
             data[f'P{p}_Tp'] = 0.0
@@ -183,18 +183,18 @@ def create_partition_data_dict(ref, selected_time, lon, lat, file_path,
 
 def save_partition_results(ref, selected_time, data, output_dir):
     """
-    Salva resultados do particionamento em arquivo CSV
+    Save results of partitioning in file CSV
     
     Returns:
     --------
     tuple: (output_path, df_results)
     """
-    # Criar nome do arquivo
+    # Create nome of file
     date_time_formatted = selected_time.strftime('%Y%m%d-%H%M%S')
     output_filename = f'ww3_{ref:03d}_{date_time_formatted}.csv'
     output_path = os.path.join(output_dir, output_filename)
     
-    # Criar DataFrame e salvar
+    # Create DataFrame e save
     df_results = pd.DataFrame([data])
     df_results.to_csv(output_path, index=False, float_format='%.6f')
     
@@ -203,72 +203,72 @@ def save_partition_results(ref, selected_time, data, output_dir):
 
 def process_single_case(row, idx, total_cases, output_dir):
     """
-    Processa um único caso WW3
+    Process a single case WW3
     
     Parameters:
     -----------
     row : pandas.Series
-        Linha do CSV com informações do caso
+        Row of CSV with information of case
     idx : int
-        Índice do caso atual
+        Index of case current
     total_cases : int
-        Número total de casos a processar
+        Number total of cases a process
     output_dir : str
-        Diretório de saída para resultados
+        Directory of output for results
     """
-    # Extrair informações do caso
+    # Extract information of case
     ref = int(row['ref'])
     target_time_str = row['time']
     target_time_dt = pd.to_datetime(target_time_str)
     
-    # Construir caminho do arquivo
+    # Construir caminho of file
     file_path = f'{WW3_DATA_PATH}/ww3_sar{ref:03d}_2020_spec.nc'
     
-    # Imprimir cabeçalho
+    # Print header
     print_case_header(idx, total_cases, ref, target_time_dt)
     
-    # Encontrar tempo mais próximo
+    # Find closest time
     itime, closest_time, time_diff_hours = find_closest_time(file_path, target_time_dt)
     print_time_match_info(closest_time, itime, time_diff_hours)
     
-    # Carregar espectro
+    # Load spectrum
     E2d, freq, dirs, dirs_rad, lon, lat = load_ww3_spectrum(file_path, itime)
     
-    # Aplicar particionamento
+    # Apply partitioning
     results = partition_spectrum(E2d, freq, dirs_rad, PEAK_DETECTION_SENSITIVITY, 5)
     
     if results is None:
         print("⚠ No spectral peaks identified!")
         return
     
-    # Calcular threshold e contar partições
+    # Calculate threshold and count partitions
     min_energy_threshold = MIN_ENERGY_THRESHOLD_FRACTION * results['total_m0']
     n_peaks_initial = len(results['peaks'])
     n_partitions_final = count_significant_partitions(results, min_energy_threshold)
     
-    # Imprimir resultados
+    # Print results
     print_partitioning_summary(n_peaks_initial, n_partitions_final)
     print_partitioning_results(results, min_energy_threshold)
     
-    # Criar e salvar resultados
+    # Create and save results
     data = create_partition_data_dict(ref, closest_time, lon, lat, file_path,
                                       results, min_energy_threshold)
     output_path, df_results = save_partition_results(ref, closest_time, data, output_dir)
     
-    # Imprimir confirmação
+    # Print confirmation
     print_save_confirmation(output_path, df_results)
 
 
 # ============================================================================
-# EXECUÇÃO PRINCIPAL
+# MAIN EXECUTION
 # ============================================================================
 
 def main():
-    """Função principal de execução"""
+    """Main execution function"""
     # Setup
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    # Carregar casos
+    # Load cases
     df = pd.read_csv(CSV_PATH)
     total_cases = len(df)
     
@@ -278,7 +278,7 @@ def main():
     print(f"Total cases to process: {total_cases}")
     print(f"Output directory: {OUTPUT_DIR}")
     
-    # Processar cada caso
+    # Process each case
     for idx, row in df.iterrows():
         try:
             process_single_case(row, idx, total_cases, OUTPUT_DIR)
