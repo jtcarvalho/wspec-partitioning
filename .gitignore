@@ -1,5 +1,7 @@
 # Ignorar arquivos de dados grandes e temporários
 
+equirements.txt
+environment.yml
 GUIA_USO.md
 TRANSFORMACAO_CONCLUIDA.md
 docs/README_NEW.md
@@ -10,6 +12,7 @@ docs/complement_README.md
 data/
 auxdata/
 output/
+exemples/README.md
 scripts/*
 
 # Bytecode
