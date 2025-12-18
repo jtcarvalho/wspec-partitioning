@@ -19,7 +19,7 @@ from wasp.partition import partition_spectrum
 # ============================================================================
 
 # Directories
-INPUT_DIR = '/path/to/your/ndbc/data'      # ← ADJUST HERE
+INPUT_DIR = '/Users/jtakeo/data/ndbc' # Adjust to your NDBC data directory
 OUTPUT_DIR = '../output/ndbc'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
