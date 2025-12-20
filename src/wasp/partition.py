@@ -156,7 +156,10 @@ def generate_mask(ICOD, MASK, NF, ND):
 
     print("Generating mask from ICOD...")
     # First pass - propagate values using ICOD directions
-    for _ in range(5):
+    # Iterate until convergence instead of fixed number of iterations
+    max_iterations = 50  # Safety limit
+    for iteration in range(max_iterations):
+        mask_before = mask_copy.copy()
         i_ranges = [(0, NF, 1), (NF-1, -1, -1)]
         for i_start, i_end, i_step in i_ranges:
             j_ranges = [(0, ND, 1), (ND-1, -1, -1)]
@@ -171,6 +174,13 @@ def generate_mask(ICOD, MASK, NF, ND):
                         if j_dir < 0: j_dir = ND - 1
                         elif j_dir >= ND: j_dir = 0
                         mask_copy[i, j] = mask_copy[i_dir, j_dir]
+        
+        # Check for convergence
+        if np.array_equal(mask_before, mask_copy):
+            print(f"  ICOD propagation converged after {iteration + 1} iterations")
+            break
+    else:
+        print(f"  ICOD propagation stopped at maximum iterations ({max_iterations})")
     
     # Second pass - handle remaining zeros
     while 0 in mask_copy:
@@ -358,7 +368,7 @@ def calculate_peak_spreading(E, MASK, frequencies, directions_rad, NF, ND, nmask
 
 
 
-def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask):
+def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask, merge_factor=0.5):
     """
     Merge overlapping wave systems based on proximity and spreading criteria.
     
@@ -367,12 +377,12 @@ def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask):
     indicating they likely represent the same wave system that was incorrectly split.
     
     The merging criterion is:
-        dist[i,j] ≤ 0.5 * Eip[i] AND dist[i,j] ≤ 0.5 * Eip[j]
+        dist[i,j] ≤ merge_factor * Eip[i] AND dist[i,j] ≤ merge_factor * Eip[j]
     
     Where:
         - dist[i,j] is the squared distance between peaks i and j
         - Eip[i] is the spreading parameter of partition i
-        - Factor 0.5 is an empirical threshold (can be tuned)
+        - merge_factor is a tunable parameter (default 0.5)
     
     Parameters
     ----------
@@ -386,6 +396,11 @@ def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask):
         Peak locations [frequency_index, direction_index] with 1-based indexing
     nmask : int
         Number of partitions before merging
+    merge_factor : float, optional (default: 0.5)
+        Merging aggressiveness factor
+        - 0.3: Conservative (keep more distinct systems) - recommended for SAR
+        - 0.5: Moderate (default) - recommended for WW3
+        - 0.7: Aggressive (merge more systems) - recommended for NDBC
     
     Returns
     -------
@@ -395,12 +410,11 @@ def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask):
     
     Notes
     -----
-    - Merging is asymmetric: partition j is merged into partition i
-    - Only affects partitions that meet both distance criteria
-    - Does not renumber partitions (may leave gaps in numbering)
-    - Subsequent renumbering by energy is recommended
+    - Direction dimension is treated as periodic (wraps around at 0/360°)
+    - Frequency dimension has hard boundaries (in the wrapping)
+    - Multiple passes ensure all points are assigned even in complex spectra
     """
-    print("Checking for overlapping systems...")
+    print(f"Checking for overlapping systems (merge_factor={merge_factor})...")
     print(f"Number of masks: {nmask}")
 
     if nmask <= 1:
@@ -409,15 +423,15 @@ def merge_overlapping_systems(MASK, dist, Eip, peaks, nmask):
     M = MASK.copy()
     
     # Create threshold matrices for comparison
-    thresholds_i = Eip * 0.5  # Merging factor (increase distance threshold)
+    thresholds_i = Eip * merge_factor  # Configurable merging factor
     
     # Find pairs to merge
     for i in range(nmask):
         for j in range(i+1, nmask):
             # Check if systems should be merged
             if dist[i, j] <= thresholds_i[i] and dist[i, j] <= thresholds_i[j]:
-                print(f"Distance {dist[i, j]} <= Thresholds ({thresholds_i[i]}, {thresholds_i[j]})")
-                print("Merging systems!")
+                print(f"  Distance {dist[i, j]:.4e} <= Thresholds ({thresholds_i[i]:.4e}, {thresholds_i[j]:.4e})")
+                print(f"  Merging systems {j+1} → {i+1}")
                 
                 # Get indices for peaks i and j
                 i_idx = int(peaks[i, 0]) - 1
@@ -715,7 +729,8 @@ def calculate_spectral_moments(E, mask, freq, dirs_rad, delf, ddir, partition_id
 
 
 
-def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_partitions):
+def partition_spectrum(E, frequencies, directions_rad, energy_threshold=None, max_partitions=5,
+                      threshold_mode='adaptive', threshold_percentile=99.0, merge_factor=0.5):
     """
     Execute complete spectrum partitioning process using Hanson & Phillips algorithm.
     
@@ -740,10 +755,21 @@ def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_par
         Frequency array in Hz
     directions_rad : ndarray (ND,)
         Direction array in radians (oceanographic convention)
-    energy_threshold : float
-        Minimum energy threshold for peak identification
-    max_partitions : int
+    energy_threshold : float, optional
+        Minimum energy threshold for peak identification (used in 'absolute' mode)
+        If None and threshold_mode='adaptive', computed from percentile
+    max_partitions : int, optional (default: 5)
         Maximum number of partitions/peaks to identify
+    threshold_mode : str, optional (default: 'adaptive')
+        Method for determining energy threshold:
+        - 'adaptive': Use percentile of spectrum energy
+        - 'absolute': Use fixed energy_threshold value
+    threshold_percentile : float, optional (default: 99.0)
+        Percentile for adaptive threshold (0-100)
+        Recommended: SAR=99.5, WW3=99.0, NDBC=98.0
+    merge_factor : float, optional (default: 0.5)
+        Factor for merging criterion: dist[i,j] <= merge_factor * Eip[i]
+        Recommended: SAR=0.3, WW3=0.5, NDBC=0.7
     
     Returns
     -------
@@ -786,16 +812,47 @@ def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_par
     - Energy conservation is checked and reported
     - Partitions are numbered by energy: 1 = most energetic system
     - Returns None if in the spectral peaks are identified
+    - Threshold mode 'adaptive' is recommended for robustness across data sources
     
     Examples
     --------
-    >>> # Define parameters explicitly
-    >>> energy_threshold = 0.05
-    >>> max_partitions = 5
-    >>> results = partition_spectrum(E2d, freq, dirs_rad, energy_threshold, max_partitions)
-    >>> print(f"Found {results['nmask']} wave systems")
-    >>> print(f"Primary system: Hs={results['Hs'][1]:.2f}m, Tp={results['Tp'][1]:.1f}s")
+    >>> # Adaptive mode (recommended)
+    >>> results = partition_spectrum(E2d, freq, dirs_rad, 
+    ...                              threshold_mode='adaptive',
+    ...                              threshold_percentile=99.0)
+    >>> 
+    >>> # Absolute mode (classical)
+    >>> results = partition_spectrum(E2d, freq, dirs_rad,
+    ...                              energy_threshold=0.05,
+    ...                              threshold_mode='absolute')
+    >>>
+    >>> # SAR-specific parameters
+    >>> results = partition_spectrum(E_sar, freq, dirs_rad,
+    ...                              threshold_percentile=99.5,  # Conservative
+    ...                              merge_factor=0.3,            # Less merging
+    ...                              max_partitions=3)
+    >>>
+    >>> # NDBC-specific parameters  
+    >>> results = partition_spectrum(E_ndbc, freq, dirs_rad,
+    ...                              threshold_percentile=98.0,   # Permissive
+    ...                              merge_factor=0.7,            # More merging
+    ...                              max_partitions=3)
     """
+    # Determine energy threshold
+    if threshold_mode == 'adaptive':
+        if E.max() > 0:
+            energy_threshold = np.percentile(E[E > 0], threshold_percentile)
+            print(f"Adaptive threshold: {energy_threshold:.2e} ({threshold_percentile:.1f}th percentile)")
+        else:
+            print("WARNING: Spectrum has no positive values")
+            return None
+    elif threshold_mode == 'absolute':
+        if energy_threshold is None:
+            raise ValueError("Must provide energy_threshold in absolute mode")
+        print(f"Absolute threshold: {energy_threshold:.2e}")
+    else:
+        raise ValueError(f"Invalid threshold_mode: {threshold_mode}")
+    
     NF, ND = E.shape
     ICOD, MASK, peaks, nmask = identify_spectral_peaks(
         E, NF, ND, energy_threshold, max_partitions
@@ -814,7 +871,7 @@ def partition_spectrum(E, frequencies, directions_rad, energy_threshold, max_par
     distances = calculate_peak_distances(peaks, frequencies, directions_rad, nmask)
     hs, tp, dp, m0, delf, ddir, _, _ = calculate_wave_parameters(E, frequencies, directions_rad)
     Eip = calculate_peak_spreading(E, MASK, frequencies, directions_rad, NF, ND, nmask, m0, delf, ddir)
-    MASK = merge_overlapping_systems(MASK, distances, Eip, peaks, nmask)
+    MASK = merge_overlapping_systems(MASK, distances, Eip, peaks, nmask, merge_factor=merge_factor)
     
     # Use corrected energy calculation function
     e, Hs = calculate_partitioned_energy(E, MASK, delf, ddir, NF, ND, nmask)
