@@ -1,0 +1,65 @@
+# ============================================================================
+# WASP Configuration File - Example
+# ============================================================================
+# 
+# Instructions:
+# 1. Copy this file to config.yaml:
+#    cp config.yaml.example config.yaml
+# 
+# 2. Edit config.yaml with your paths
+# 
+# 3. Run scripts normally - they will read from config.yaml
+#
+# Note: config.yaml is in .gitignore (not tracked by git)
+# ============================================================================
+
+# ============================================================================
+# DATA PATHS
+# ============================================================================
+# Edit these paths to match your data location
+
+paths:
+  sar_data: /path/to/your/sentinel-sar
+  ndbc_data: /path/to/your/ndbc
+  ww3_ndbc: /path/to/your/ww3-ndbc
+  ww3_sar: /path/to/your/ww3-sar
+
+# ============================================================================
+# PARTITIONING PARAMETERS
+# ============================================================================
+# Optimized values from notebook experiments
+
+partitioning:
+  # SAR (Sentinel-1) - High resolution data
+  sar:
+    threshold_percentile: 99.5  # Conservative - avoids noise peaks
+    merge_factor: 0.3            # Low - preserves distinct systems
+    max_partitions: 3            # Typically 1-3 systems
+    min_energy_fraction: 0.01   # 1% threshold for post-processing
+  
+  # WW3 (WaveWatch III) - Model data, moderate resolution
+  ww3:
+    threshold_percentile: 99.0  # Conservative for model data
+    merge_factor: 0.6            # Higher - merges nearby systems
+    max_partitions: 5            # Models can have 2-5 systems
+    min_energy_fraction: 0.01   # 1% threshold for post-processing
+  
+  # NDBC (Buoys) - Low directional resolution, MEM reconstruction
+  ndbc:
+    threshold_percentile: 95.0  # Lower - captures multiple peaks
+    merge_factor: 0.5            # Moderate - combines MEM artifacts
+    max_partitions: 5            # Up to 5 systems
+    min_energy_fraction: 0.01   # 1% threshold for post-processing
+    max_time_diff_hours: 3.0    # Maximum time difference for matching
+
+# ============================================================================
+# PROCESSING OPTIONS
+# ============================================================================
+
+processing:
+  # Time sampling for WW3 extraction (hours between outputs)
+  # Options: 1, 3, 6, 12, 24
+  time_interval_hours: 6
+  
+  # NetCDF group name for SAR data (CMEMS structure)
+  sar_netcdf_group: obs_params
