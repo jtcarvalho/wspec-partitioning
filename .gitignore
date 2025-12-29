@@ -11,6 +11,7 @@ notebooks/checking_sar_algorithm.ipynb
 notebooks/download_2020.py
 examples/translate_to_english.py
 examples/00_create_matches.py
+examples/config.yaml
 scripts/*
 
 # Bytecode
