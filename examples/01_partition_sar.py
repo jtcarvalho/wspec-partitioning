@@ -36,9 +36,12 @@ SAR_DATA_PATH = f'/Users/jtakeo/data/sentinel1ab/{case}'
 CSV_PATH = f'../auxdata/sar_matches_{case}_track.csv'
 
 # Partitioning parameters
-MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total
-PEAK_DETECTION_SENSITIVITY = 0.5
+MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total (post-processing filter)
 MAX_PARTITIONS = 5
+
+# Parameters for partition_spectrum() function
+THRESHOLD_PERCENTILE = 99.5       # SAR: Conservative threshold for high-resolution data
+MERGE_FACTOR = 0.3                # SAR: Preserves distinct systems due to clear directional separation
 
 # NetCDF group name (CMEMS structure)
 GROUP_NAME = "obs_params"
@@ -325,13 +328,13 @@ def process_single_case(row, idx, total_cases, output_dir):
     
     # Apply partitioning with SAR-specific parameters
     # SAR has high resolution, so we use:
-    # - High threshold (99.5%) to avoid splitting single systems
-    # - Conservative merge (0.3) due to clear directional separation
+    # - High threshold (99.5%) to avoid detecting noise peaks
+    # - Conservative merge (0.3) to preserve distinct systems
     results = partition_spectrum(
         E2d, freq, dirs_rad,
         threshold_mode='adaptive',
-        threshold_percentile=99.5,  # SAR: High threshold for high-res data
-        merge_factor=0.3,           # SAR: Conservative merging
+        threshold_percentile=THRESHOLD_PERCENTILE,
+        merge_factor=MERGE_FACTOR,
         max_partitions=MAX_PARTITIONS
     )
     

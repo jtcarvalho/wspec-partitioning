@@ -36,10 +36,13 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 MATCHES_CSV = f'../auxdata/sar_ndbc_ww3_matches_{CASE_NAME}.csv'
 
 # Partitioning parameters
-ENERGY_THRESHOLD = 1e-6           # Minimum energy for peak detection (m²·s·rad⁻¹)
 MAX_PARTITIONS = 5                # Maximum number of partitions
 MIN_ENERGY_FRACTION = 0.01        # Minimum energy fraction (1% of total)
 MAX_TIME_DIFF_HOURS = 3.0         # Maximum time difference for matching
+
+# Parameters for partition_spectrum() function
+THRESHOLD_PERCENTILE = 95.0       # NDBC: Lower threshold for low directional resolution
+MERGE_FACTOR = 0.5                # NDBC: Moderate merging to combine MEM artifacts
 
 
 # ============================================================================
@@ -107,14 +110,14 @@ def process_ndbc_match(match_row):
         print(f"Dir range: {dirs.min():.1f} - {dirs.max():.1f}°")
         
         # Apply partitioning with NDBC-specific parameters
-        # NDBC has low directional resolution, so we use:
-        # - Lower threshold (98.0%) to capture broader features
-        # - Aggressive merge (0.7) to avoid over-partitioning
+        # NDBC has low directional resolution (MEM reconstruction), so we use:
+        # - Lower threshold (95%) to capture multiple peaks
+        # - Moderate merge (0.5) to combine MEM artifacts without over-merging
         results = partition_spectrum(
             E2d, freq, dirs_rad,
             threshold_mode='adaptive',
-            threshold_percentile=98.0,  # NDBC: Lower threshold for low-res data
-            merge_factor=0.7,           # NDBC: Aggressive merging
+            threshold_percentile=THRESHOLD_PERCENTILE,
+            merge_factor=MERGE_FACTOR,
             max_partitions=MAX_PARTITIONS
         )
         

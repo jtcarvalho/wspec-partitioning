@@ -47,23 +47,26 @@ case = 'all'
 OUTPUT_DIR = f'../data/{case}/partition-ndbc'
 
 #NDBC options
-CSV_PATH = f'../auxdata/ndbc_ww3_matches_{case}.csv'
-WW3_DATA_PATH = f'/work/cmcc/jc11022/simulations/uGlobWW3/highResExperiments/exp_02-st4-uost-psi-400s-era5-b143-ic5-noref/2020/ww3-ndbc/'
+# CSV_PATH = f'../auxdata/ndbc_ww3_matches_{case}.csv'
+# WW3_DATA_PATH = f'/work/cmcc/jc11022/simulations/uGlobWW3/highResExperiments/exp_02-st4-uost-psi-400s-era5-b143-ic5-noref/2020/ww3-ndbc/'
 
 #SAR options
-#CSV_PATH = f'../auxdata/sar_ww3_matches_{case}.csv'
-#WW3_DATA_PATH = f'/work/cmcc/jc11022/simulations/uGlobWW3/highResExperiments/exp_02-st4-uost-psi-400s-era5-b143-ic5-noref/2020/sar-spec/'
+# CSV_PATH = f'../auxdata/sar_ww3_matches_{case}.csv'
+# WW3_DATA_PATH = f'/work/cmcc/jc11022/simulations/uGlobWW3/highResExperiments/exp_02-st4-uost-psi-400s-era5-b143-ic5-noref/2020/sar-spec/'
 
 
 # OUTPUT_DIR = f'../data/{case}/partition'
-# CSV_PATH = f'../auxdata/ndbc_ww3_matches_{case}.csv'
-# WW3_DATA_PATH = f'/work/cmcc/jc11022/simulations/uGlobWW3/highResExperiments/exp_02-st4-uost-psi-400s-era5-b143-ic5-noref/2020/sar-spec'
+CSV_PATH = f'../auxdata/ndbc_ww3_matches_{case}.csv'
+WW3_DATA_PATH = f'/User/data/ww3/ndbc/'
 
 
 
 # Partitioning parameters
-MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total
-PEAK_DETECTION_SENSITIVITY = 0.5
+MIN_ENERGY_THRESHOLD_FRACTION = 0.01  # 1% of the energy total (post-processing filter)
+
+# Parameters for partition_spectrum() function
+THRESHOLD_PERCENTILE = 99.0  # WW3: Conservative threshold for model data
+MERGE_FACTOR = 0.6           # WW3: Merge nearby systems more aggressively
 
 # Time sampling for NDBC (hours between outputs)
 # Options: 1 (hourly), 3 (3-hourly), 6 (6-hourly), 12 (12-hourly), 24 (daily)
@@ -353,13 +356,13 @@ def process_time_step(ref_id, selected_time, E2d, freq, dirs, dirs_rad,
     
     # Apply partitioning with WW3-specific parameters
     # WW3 has moderate resolution, so we use:
-    # - Moderate threshold (99.0%) balanced for model data
-    # - Balanced merge (0.5) for typical conditions
+    # - Conservative threshold (99.0%) to avoid detecting noise peaks
+    # - Higher merge factor (0.6) to merge nearby systems more aggressively
     results = partition_spectrum(
         E2d, freq, dirs_rad,
         threshold_mode='adaptive',
-        threshold_percentile=99.0,  # WW3: Moderate threshold for model data
-        merge_factor=0.5,           # WW3: Balanced merging
+        threshold_percentile=THRESHOLD_PERCENTILE,
+        merge_factor=MERGE_FACTOR,
         max_partitions=5
     )
     
